@@ -1,0 +1,113 @@
+[tool.poetry]
+name = "diploma"
+version = "0.1.0"
+description = ""
+authors = ["Egor Muratov <egor.muratov.27@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.115.6"
+aiofiles = "24.1.0"
+alembic = "1.14.0"
+amqp = "5.3.1"
+annotated-types = "0.7.0"
+anyio = "4.8.0"
+async-timeout = "5.0.1"
+asyncpg = "0.30.0"
+bcrypt = "4.2.1"
+billiard = "4.2.1"
+celery = "5.4.0"
+certifi = "2024.12.14"
+cffi = "1.17.1"
+charset-normalizer = "3.4.1"
+click = "8.1.8"
+click-didyoumean = "0.3.1"
+click-plugins = "1.1.1"
+click-repl = "0.3.0"
+colorama = "0.4.6"
+cryptography = "44.0.0"
+dnspython = "2.7.0"
+ecdsa = "0.19.0"
+email-validator = "2.2.0"
+exceptiongroup = "1.2.2"
+fastapi-cache2 = "0.2.2"
+flower = "2.0.1"
+greenlet = "3.1.1"
+gunicorn = "23.0.0"
+h11 = "0.14.0"
+httpcore = "1.0.7"
+httpx = "0.28.1"
+humanize = "4.11.0"
+idna = "3.10"
+iniconfig = "2.0.0"
+jinja2 = "3.1.5"
+kombu = "5.4.2"
+mako = "1.3.8"
+markupsafe = "3.0.2"
+packaging = "24.2"
+passlib = "1.7.4"
+pendulum = "3.0.0"
+pillow = "11.1.0"
+pluggy = "1.5.0"
+prometheus-fastapi-instrumentator = "7.0.2"
+prometheus-client = "0.21.1"
+prompt-toolkit = "3.0.50"
+pyasn1 = "0.6.1"
+pycparser = "2.22"
+pydantic = "2.10.4"
+pydantic-settings = "2.7.1"
+pydantic-core = "2.27.2"
+pyjwt = "2.10.1"
+pytest = "8.3.5"
+pytest-asyncio = "0.25.3"
+python-dateutil = "2.9.0.post0"
+python-jose = {version = "3.3.0", extras = ["cryptography"]}
+python-dotenv = "1.0.1"
+python-multipart = "0.0.20"
+pytz = "2025.1"
+redis = "4.6.0"
+requests = "2.32.3"
+rsa = "4.9"
+sentry-sdk = "2.23.1"
+six = "1.17.0"
+sniffio = "1.3.1"
+sqlalchemy = "2.0.36"
+starlette = "0.41.3"
+time-machine = "2.16.0"
+tomli = "2.2.1"
+tornado = "6.4.2"
+typing-extensions = "4.12.2"
+tzdata = "2025.1"
+urllib3 = "2.3.0"
+uvicorn = "0.34.0"
+vine = "5.1.0"
+wcwidth = "0.2.13"
+websockets = "15.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.flake8]
+ignore = ['E231', 'E241']
+per-file-ignores = [
+    '__init__.py:F401',
+]
+max-line-length = 88
+count = true
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
