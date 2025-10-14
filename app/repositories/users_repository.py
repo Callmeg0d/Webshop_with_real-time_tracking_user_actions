@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Users
@@ -10,6 +10,13 @@ from app.repositories.base_repository import BaseRepository
 class UsersRepository(BaseRepository[Users]):
     def __init__(self, db: AsyncSession):
         super().__init__(Users, db)
+
+    async def get_user_by_email(self, email: str) -> Optional[Users]:
+        """Находит пользователя по email"""
+        result = await self.db.execute(
+            select(Users).where(Users.email == email)
+        )
+        return result.scalar_one_or_none()
 
     async def create_user(self, user_data: dict) -> Users:
         """Создаёт нового пользователя"""

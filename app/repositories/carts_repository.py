@@ -191,7 +191,7 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
         row = result.fetchone()
         return row[0]
 
-    async def get_cart_item(self, user_id: int, product_id: int) -> Optional[ShoppingCarts]:
+    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[ShoppingCarts]:
         """
         Получает конкретный товар из корзины пользователя.
 
