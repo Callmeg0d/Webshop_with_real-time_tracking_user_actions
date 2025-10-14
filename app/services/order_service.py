@@ -16,6 +16,7 @@ from app.exceptions import (
 )
 from app.models import Orders
 from app.websockets import send_product_update
+from app.tasks.tasks import send_order_confirmation_email
 
 class OrderService:
     def __init__(self,
@@ -84,10 +85,24 @@ class OrderService:
         await self.db.commit()
         await self.db.refresh(order)
 
+        # Отправляем WebSocket уведомления об обновлении остатков
         for item in cart_items:
             new_quantity = await self.products_repository.get_quantity(item["product_id"])
             if new_quantity is not None:
                 await send_product_update(item["product_id"], new_quantity)
+
+        # Получаем email пользователя и отправляем подтверждение заказа
+        user = await self.users_repository.get(user_id)
+        if user and user.email:
+            order_dict = {
+                "order_id": order.order_id,
+                "created_at": order.created_at,
+                "status": order.status,
+                "delivery_address": order.delivery_address,
+                "order_items": order.order_items,
+                "total_cost": order.total_cost
+            }
+            send_order_confirmation_email.delay(order_dict, user.email)
 
         return order
 
