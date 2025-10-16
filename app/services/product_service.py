@@ -1,4 +1,5 @@
 from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories import ProductsRepository
 from app.schemas.products import SProducts
