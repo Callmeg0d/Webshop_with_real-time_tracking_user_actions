@@ -8,6 +8,7 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.reviews import Reviews
     from app.models.carts import ShoppingCarts
+    from app.models.categories import Categories
 
 
 class Products(Base):
@@ -20,7 +21,8 @@ class Products(Base):
     product_quantity: Mapped[int] = mapped_column()
     image: Mapped[Optional[int]]
     features: Mapped[Optional[list[str]]] = mapped_column(JSON)
-    category_name: Mapped[str] = mapped_column(ForeignKey("categories.category_name"))
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
 
+    category: Mapped["Categories"] = relationship(back_populates="products")
     shopping_carts: Mapped[list["ShoppingCarts"]] = relationship(back_populates="product")
     reviews: Mapped[list["Reviews"]] = relationship("Reviews", back_populates="product")
