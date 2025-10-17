@@ -49,4 +49,4 @@ class OrdersRepository(BaseRepository[Orders]):
         result = await self.db.execute(
             select(Orders).where(Orders.user_id == user_id)
         )
-        return result.scalars().all()
+        return list(result.scalars().all())

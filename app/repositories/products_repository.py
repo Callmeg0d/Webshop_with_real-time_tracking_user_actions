@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Products
+from app.models import Products, Categories
 from app.repositories.base_repository import BaseRepository
 
 
@@ -73,9 +73,9 @@ class ProductsRepository(BaseRepository[Products]):
         )
         return result.scalar_one_or_none()
 
-    async def get_product_by_id(self, product_id: int) -> Optional[Products]:
+    async def get_product_by_id(self, product_id: int) -> Optional[dict]:
         """
-        Получает полную информацию о товаре по его ID.
+        Получает полную информацию о товаре по его ID с названием категории.
 
         Args:
             product_id: ID товара
@@ -92,42 +92,11 @@ class ProductsRepository(BaseRepository[Products]):
                 Products.product_quantity,
                 Products.image,
                 Products.features,
-                Products.category_name,
-            ).where(Products.product_id == product_id)
-        )
-        return result.mappings().first()
-
-    async def get_price(self, product_id: int) -> Optional[int]:
-        """
-        Получает цену товара.
-
-        Args:
-            product_id: ID товара
-
-        Returns:
-            Цена товара если найден, иначе None
-        """
-        result = await self.db.execute(
-            select(Products.price)
+                Products.category_id,
+                Categories.name.label("category_name"),
+            )
+            .join(Categories, Products.category_id == Categories.id)
             .where(Products.product_id == product_id)
         )
-        return result.scalar_one_or_none()
-
-    async def get_price_and_stock(self, product_id: int) -> Optional[dict]:
-        """
-        Получает цену и количество товара.
-
-        Args:
-            product_id: ID товара
-
-        Returns:
-            Словарь с ключами price и stock если найден, иначе None
-        """
-        result = await self.db.execute(
-            select(Products.price, Products.product_quantity)
-            .where(Products.product_id == product_id)
-        )
-        row = result.first()
-        if row:
-            return {"price": row.price, "stock": row.product_quantity}
-        return None
+        row = result.mappings().first()
+        return dict(row) if row else None

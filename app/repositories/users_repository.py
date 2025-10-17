@@ -1,5 +1,6 @@
 from typing import Optional
 
+from pydantic import EmailStr
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +25,7 @@ class UsersRepository(BaseRepository[Users]):
         """
         super().__init__(Users, db)
 
-    async def get_user_by_email(self, email: str) -> Optional[Users]:
+    async def get_user_by_email(self, email: str | EmailStr) -> Optional[Users]:
         """
         Находит пользователя по email.
 

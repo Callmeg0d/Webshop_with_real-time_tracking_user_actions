@@ -189,7 +189,7 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
             .returning(ShoppingCarts.total_cost)
         )
         row = result.fetchone()
-        return row[0]
+        return row[0] if row else 0
 
     async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[ShoppingCarts]:
         """
