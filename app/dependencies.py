@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import AsyncGenerator
 
 from fastapi import Depends, Request
@@ -110,7 +110,7 @@ async def get_current_user(
     except JWTError:
         raise IncorrectTokenFormatException
     expire: str = payload.get("exp")  # достали время истечения токена
-    if (not expire) or int(expire) < datetime.utcnow().timestamp():
+    if (not expire) or int(expire) < datetime.now(tz=timezone.utc).timestamp():
         raise TokenExpiredException
 
     user_id: str = payload.get("sub")  # достали id
