@@ -11,7 +11,8 @@ class SProducts(BaseModel):
     product_quantity: int
     image: Optional[int]
     features: Optional[dict[str, str]]
-    category_name: str
+    category_id: int
+    category_name: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

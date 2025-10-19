@@ -7,3 +7,10 @@ class SReviews(BaseModel):
     feedback: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SReviewCreate(BaseModel):
+    rating: int
+    feedback: str
+
+    model_config = ConfigDict(from_attributes=True)
