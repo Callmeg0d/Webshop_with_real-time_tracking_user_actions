@@ -10,14 +10,13 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 
 from app.config import settings
-from app.images.router import router as router_images
-from app.orders.router import router as router_orders
-from app.pages.router import router as router_pages
-from app.products.router import router as router_products
-from app.reviews.router import router as router_reviews
-from app.shopping_carts.router import router as router_shopping_carts
-from app.users.router import router_auth as router_users_auth
-from app.users.router import router_users as router_users
+from app.api.products import router as router_products
+from app.api.carts import router as router_carts
+from app.api.orders import router as router_orders
+from app.api.reviews import router as router_reviews
+from app.api.users import router_auth as router_users_auth
+from app.api.users import router_users as router_users
+from app.api.pages import router as router_pages
 from app.websockets import manager
 
 
@@ -43,11 +42,10 @@ app.mount("/static", StaticFiles(directory="app/static"), "static")
 app.include_router(router_users_auth)
 app.include_router(router_users)
 app.include_router(router_products)
+app.include_router(router_carts)
 app.include_router(router_orders)
-app.include_router(router_shopping_carts)
 app.include_router(router_reviews)
 app.include_router(router_pages)
-app.include_router(router_images)
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
     "http://127.0.0.1:8000",
