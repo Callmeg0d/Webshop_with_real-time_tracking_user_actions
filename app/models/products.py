@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Any
 
-from sqlalchemy import JSON, ForeignKey
+from sqlalchemy import ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -20,7 +21,7 @@ class Products(Base):
     price: Mapped[int] = mapped_column()
     product_quantity: Mapped[int] = mapped_column()
     image: Mapped[Optional[int]]
-    features: Mapped[Optional[list[str]]] = mapped_column(JSON)
+    features: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB)
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
 
     category: Mapped["Categories"] = relationship(back_populates="products")
