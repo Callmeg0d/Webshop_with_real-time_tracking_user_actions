@@ -4,12 +4,12 @@ from jose import jwt as jose_jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.security import get_password_hash, authenticate_user, create_access_token, create_refresh_token
 from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException, TokenExpiredException
 from app.models import Users
 from app.repositories import UsersRepository
 from app.schemas.users import SUserAuth
 from app.tasks.tasks import send_registration_confirmation_email
-from app.users.auth import get_password_hash, authenticate_user, create_access_token, create_refresh_token
 
 
 class AuthService:
@@ -42,7 +42,7 @@ class AuthService:
 
     async def login_user(self, user_data: SUserAuth) -> dict[str, str]:
         # Аутентифицируем пользователя
-        user = await authenticate_user(user_data.email, user_data.password)
+        user = await authenticate_user(user_data.email, user_data.password, self.db)
         if not user:
             raise IncorrectEmailOrPasswordException
 

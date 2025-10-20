@@ -115,9 +115,9 @@ class OrderService:
             for item in order.order_items:
                 product_id = item.get("product_id")
                 if product_id:
-                    product = await self.products_repository.get_product_by_id(product_id)
+                    product = await self.products_repository.get_product_by_id(int(product_id))
                     if product:
-                        item["product_image_url"] = f"/static/images/{product.image}.webp"
+                        item["product_image_url"] = f"/static/images/{product['image']}.webp"
 
         return [
             {
