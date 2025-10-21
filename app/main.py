@@ -17,6 +17,8 @@ from app.api.reviews import router as router_reviews
 from app.api.users import router_auth as router_users_auth
 from app.api.users import router_users as router_users
 from app.api.pages import router as router_pages
+from app.messaging.broker import broker
+from app.messaging.handlers import router
 from app.websockets import manager
 
 
@@ -24,8 +26,13 @@ from app.websockets import manager
 async def lifespan(app: FastAPI):
     redis = aioredis.from_url(f"redis://{settings.REDIS_HOST}")
     FastAPICache.init(RedisBackend(redis), prefix="cache")
+
+    broker.include_router(router)
+    await broker.start()
+
     yield
 
+    await broker.stop()
 
 sentry_sdk.init(
     dsn=settings.SENTRY_URL,
