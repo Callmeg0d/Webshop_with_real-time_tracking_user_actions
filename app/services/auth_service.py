@@ -9,8 +9,7 @@ from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordE
 from app.models import Users
 from app.repositories import UsersRepository
 from app.schemas.users import SUserAuth
-from app.tasks.tasks import send_registration_confirmation_email
-
+from app.messaging.publisher import publish_registration_confirmation
 
 class AuthService:
     def __init__(self,
@@ -36,7 +35,7 @@ class AuthService:
         await self.db.refresh(user)
 
         # Отправляем email с подтверждением регистрации
-        send_registration_confirmation_email.delay(user_data.email)
+        await publish_registration_confirmation(user_data.email)
 
         return user
 

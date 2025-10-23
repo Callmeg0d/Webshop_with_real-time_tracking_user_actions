@@ -10,8 +10,8 @@ router = KafkaRouter()
 
 
 @router.subscriber("registration_confirmation")
-async def handle_registation_confirmation():
-    msg_context = create_registration_confirmation_template()
+async def handle_registration_confirmation(email_to: EmailStr):
+    msg_context = create_registration_confirmation_template(email_to)
 
     with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
         server.login(settings.SMTP_USER, settings.SMTP_PASS)

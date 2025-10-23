@@ -102,7 +102,7 @@ class OrderService:
                 "order_items": order.order_items,
                 "total_cost": order.total_cost
             }
-            send_order_confirmation_email.delay(order_dict, user.email)
+            await publish_order_confirmation(order_dict, user.email)
 
         return order
 

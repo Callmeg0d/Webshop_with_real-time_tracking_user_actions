@@ -24,12 +24,28 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    KAFKA_HOST: str
+    KAFKA_PORT: int
+
+    MODE: str
+
     @property
     def DATABASE_URL(self):
         return (f'postgresql+asyncpg://{self.DB_USER}:'
                 f'{self.DB_PASS}@{self.DB_HOST}:'
                 f'{self.DB_PORT}/{self.DB_NAME}')
 
+    TEST_DB_HOST: str
+    TEST_DB_PORT: int
+    TEST_DB_USER: str
+    TEST_DB_PASS: str
+    TEST_DB_NAME: str
+
+    @property
+    def TEST_DATABASE_URL(self):
+        return (f'postgresql+asyncpg://{self.TEST_DB_USER}:'
+                f'{self.TEST_DB_PASS}@{self.TEST_DB_HOST}:'
+                f'{self.TEST_DB_PORT}/{self.TEST_DB_NAME}')
 
     model_config = SettingsConfigDict(env_file=".env")
 

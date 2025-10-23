@@ -26,12 +26,12 @@ def create_order_confirmation_template(
 
 
 def create_registration_confirmation_template(
-        #email_to: EmailStr Для теста
+        email_to: EmailStr
 ):
     email = EmailMessage()
     email["Subject"] = "Подтверждение регистрации"
     email["From"] = settings.SMTP_USER
-    email["To"] = settings.SMTP_USER
+    email["To"] = email_to
 
     email.set_content(
         f"""
