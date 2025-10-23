@@ -1,9 +1,16 @@
-FROM python:3.9
+FROM python:3.12-alpine AS builder
+
+RUN pip install poetry poetry-plugin-export
 
 WORKDIR /app
+COPY pyproject.toml poetry.lock ./
+RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-COPY requirements.txt .
+# Финальный образ
+FROM python:3.12-slim
 
+WORKDIR /app
+COPY --from=builder /app/requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY . .

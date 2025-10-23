@@ -1,15 +1,15 @@
-version: "3.7"
 services:
   db:
     container_name: "db"
-    volumes:
-      - postgresdata:/var/lib/postgresql/data
     image: postgres:17
-    env_file:
-      - .env-non-dev
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER}
+      POSTGRES_PASSWORD: ${TEST_DB_PASS}
+      POSTGRES_DB: ${TEST_DB_NAME}
     ports:
       - 5432:5432
-
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
@@ -18,31 +18,44 @@ services:
   redis:
     container_name: "redis_db"
     image: redis:7
+    ports:
+      - 6379:6379
+    volumes:
+      - redisdata:/data
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
   webshop:
-    image: webshop:latest
     build:
       context: .
+    image: webshop:latest
     container_name: webshop_app
     env_file:
-      - .env-non-dev
+      - .env
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
     command: sh -c "alembic upgrade head && gunicorn app.main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"
     ports:
       - 7777:8000
-
-  celery:
-    image: webshop:latest
-    build:
-      context: .
-    container_name: webshop_celery
-    command: sh -c "celery --app=app.tasks.celery_app:celery worker -l INFO"
-    env_file:
-      - .env-non-dev
-    depends_on:
-      - redis
 
   prometheus:
     image: prom/prometheus:v2.43.0
@@ -65,5 +78,6 @@ services:
 
 volumes:
   postgresdata:
+  redisdata:
   grafanadata:
   prometheusdata:
