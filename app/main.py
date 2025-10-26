@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 import sentry_sdk
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
@@ -19,7 +19,6 @@ from app.api.users import router_users as router_users
 from app.api.pages import router as router_pages
 from app.messaging.broker import broker
 from app.messaging.handlers import router
-from app.websockets import manager
 
 
 @asynccontextmanager
@@ -75,17 +74,6 @@ app.add_middleware(
         "Authorization",
     ],
 )
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-
 
 instrumentator = Instrumentator(
     should_group_status_codes=False,
