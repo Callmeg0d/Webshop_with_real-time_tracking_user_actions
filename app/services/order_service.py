@@ -15,8 +15,7 @@ from app.exceptions import (
     CannotMakeOrderWithoutAddress
 )
 from app.models import Orders
-from app.websockets import send_product_update
-from app.tasks.tasks import send_order_confirmation_email
+from app.messaging.publisher import publish_order_confirmation
 
 class OrderService:
     def __init__(self,
@@ -84,12 +83,6 @@ class OrderService:
 
         await self.db.commit()
         await self.db.refresh(order)
-
-        # Отправляем WebSocket уведомления об обновлении остатков
-        for item in cart_items:
-            new_quantity = await self.products_repository.get_quantity(item["product_id"])
-            if new_quantity is not None:
-                await send_product_update(item["product_id"], new_quantity)
 
         # Получаем email пользователя и отправляем подтверждение заказа
         user = await self.users_repository.get(user_id)
