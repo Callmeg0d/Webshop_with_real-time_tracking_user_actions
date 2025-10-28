@@ -83,3 +83,8 @@ async def get_profile(request: Request, user: Users = Depends(get_current_user))
             ("profile.html",
              {"request": request, "user": user})
             )
+
+
+@router.get("/tracker-debug", response_class=HTMLResponse)
+async def get_tracker_debug_page(request: Request):
+    return templates.TemplateResponse("tracker_debug.html", {"request": request})

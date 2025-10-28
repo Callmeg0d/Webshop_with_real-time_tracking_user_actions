@@ -92,22 +92,6 @@
         }
     </style>
     <script>
-        const socket = new WebSocket("ws://localhost:7777/ws");
-        socket.onopen = () => console.log("WebSocket подключен");
-        socket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            updateProductQuantity(data.product_id, data.product_quantity);
-        };
-        socket.onclose = () => console.log("WebSocket отключен");
-
-        function updateProductQuantity(productId, newQuantity) {
-            const productElement = document.querySelector(`[data-product-id="${productId}"]`);
-            if (productElement) {
-                const quantityElement = productElement.querySelector('.product-quantity');
-                if (quantityElement) quantityElement.innerHTML = `<strong>В наличии:</strong> ${newQuantity}`;
-            }
-        }
-
         function searchProducts() {
             let input = document.getElementById("searchInput").value.toLowerCase();
             document.querySelectorAll(".product-card").forEach(product => {

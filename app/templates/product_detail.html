@@ -147,7 +147,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container"
+     data-product-id="{{ product.product_id }}"
+     data-product-name="{{ product['name'] }}"
+     data-product-price="{{ product['price'] }}"
+     data-product-category="{{ product['category_name'] }}">
     <div class="product-detail-container">
         <div class="product-image">
             <img src="{{ url_for('static', path='images/' + product.product_id|string + '.webp') }}" alt="Фото товара">
@@ -168,7 +172,15 @@
             </ul>
             {% endif %}
 
-            <button class="add-to-cart">Добавить в корзину</button>
+            <button class="add-to-cart"
+                    data-action="add-to-cart"
+                    data-product-id="{{ product.product_id }}"
+                    data-product-name="{{ product['name'] }}"
+                    data-product-price="{{ product['price'] }}"
+                    data-quantity="1"
+                    data-source="product_page">
+                Добавить в корзину
+            </button>
         </div>
     </div>
 </div>
@@ -188,11 +200,13 @@
 
     <div class="review-form-container">
         <h3>Оставить отзыв</h3>
-        <form id="review-form">
+        <form id="review-form"
+              data-form="review"
+              data-product-id="{{ product.product_id }}">
             <input type="hidden" id="product_id" value="{{ product.product_id }}">
 
             <label for="rating">Оценка:</label>
-            <select id="rating" required>
+            <select id="rating" name="rating" required>
                 <option value="5">5 - Отлично</option>
                 <option value="4">4 - Хорошо</option>
                 <option value="3">3 - Нормально</option>
@@ -201,7 +215,7 @@
             </select>
 
             <label for="feedback">Ваш отзыв:</label>
-            <textarea id="feedback" required></textarea>
+            <textarea id="feedback" name="feedback" required></textarea>
 
             <button type="submit">Оставить отзыв</button>
         </form>

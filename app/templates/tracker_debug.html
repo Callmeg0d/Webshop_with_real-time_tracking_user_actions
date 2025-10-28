@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker Debug - События пользователей</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Debug Tracker - Собранные события</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded shadow">
+                <div class="text-gray-500 text-sm">Сессия ID</div>
+                <div class="font-mono text-xs" id="session-id">-</div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <div class="text-gray-500 text-sm">Событий собрано</div>
+                <div class="text-2xl font-bold" id="events-count">0</div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <div class="text-gray-500 text-sm">Время на странице</div>
+                <div class="text-2xl font-bold" id="page-time">0s</div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <div class="text-gray-500 text-sm">Макс. прокрутка</div>
+                <div class="text-2xl font-bold" id="scroll-depth">0%</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded shadow mb-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h2 class="text-xl font-bold">События в реальном времени</h2>
+                <div class="space-x-2">
+                    <button onclick="refreshEvents()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                        Обновить
+                    </button>
+                    <button onclick="clearEvents()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        Очистить
+                    </button>
+                    <button onclick="downloadEvents()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                        Скачать JSON
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4">
+                <div class="mb-4 flex space-x-2">
+                    <button onclick="filterEvents('all')" class="filter-btn px-3 py-1 rounded bg-blue-500 text-white" data-filter="all">
+                        Все
+                    </button>
+                    <button onclick="filterEvents('click')" class="filter-btn px-3 py-1 rounded bg-gray-200" data-filter="click">
+                        Клики
+                    </button>
+                    <button onclick="filterEvents('scroll')" class="filter-btn px-3 py-1 rounded bg-gray-200" data-filter="scroll">
+                        Скроллы
+                    </button>
+                    <button onclick="filterEvents('page_view')" class="filter-btn px-3 py-1 rounded bg-gray-200" data-filter="page_view">
+                        Просмотры страниц
+                    </button>
+                    <button onclick="filterEvents('custom')" class="filter-btn px-3 py-1 rounded bg-gray-200" data-filter="custom">
+                        Кастомные
+                    </button>
+                </div>
+
+                <div id="events-list" class="space-y-2">
+                    <!-- Сюда потом события добавить) -->
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded shadow p-4">
+            <h2 class="text-xl font-bold mb-4">localStorage Events</h2>
+            <div id="stored-events" class="text-xs font-mono bg-gray-50 p-4 rounded overflow-auto max-h-96">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'all';
+        let updateInterval;
+
+        function updateStats() {
+            if (window.tracker) {
+                const info = window.tracker.getSessionInfo();
+                document.getElementById('session-id').textContent = info.sessionId;
+                document.getElementById('events-count').textContent = info.eventsCount;
+                document.getElementById('page-time').textContent = Math.round(info.pageViewDuration / 1000) + 's';
+                document.getElementById('scroll-depth').textContent = info.maxScrollDepth + '%';
+            }
+        }
+
+        function refreshEvents() {
+            if (!window.tracker) {
+                return;
+            }
+
+            const events = window.tracker.getEvents();
+            const eventsList = document.getElementById('events-list');
+            
+            // Фильтруем события
+            const filteredEvents = currentFilter === 'all' 
+                ? events 
+                : events.filter(e => {
+                    if (currentFilter === 'custom') {
+                        return e.eventType.startsWith('custom_');
+                    }
+                    return e.eventType.includes(currentFilter);
+                });
+
+            eventsList.innerHTML = '';
+
+            if (filteredEvents.length === 0) {
+                eventsList.innerHTML = '<div class="text-gray-500 text-center py-8">Нет событий для отображения</div>';
+                return;
+            }
+
+            // Показываем последние 50 событий
+            filteredEvents.slice(-50).reverse().forEach(event => {
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'border rounded p-3 hover:bg-gray-50';
+                
+                const eventTypeColor = {
+                    'click': 'blue',
+                    'scroll': 'green',
+                    'page_view': 'purple',
+                    'page_hidden': 'yellow',
+                    'page_visible': 'yellow',
+                    'page_unload': 'red',
+                };
+                
+                const color = eventTypeColor[event.eventType] || 'gray';
+                
+                eventDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="bg-${color}-100 text-${color}-800 px-2 py-1 rounded text-sm font-semibold">
+                            ${event.eventType}
+                        </span>
+                        <span class="text-gray-500 text-sm">
+                            ${new Date(event.timestamp).toLocaleTimeString()}
+                        </span>
+                    </div>
+                    <div class="text-xs text-gray-600">
+                        <div><strong>URL:</strong> ${event.pathname}</div>
+                        ${renderEventDetails(event)}
+                    </div>
+                `;
+                
+                eventsList.appendChild(eventDiv);
+            });
+
+            updateStats();
+        }
+
+        function renderEventDetails(event) {
+            let details = '';
+            
+            if (event.eventType === 'click') {
+                details += `<div><strong>Элемент:</strong> ${event.element.tagName}`;
+                if (event.element.id) details += ` #${event.element.id}`;
+                if (event.clickType) details += ` (${event.clickType})`;
+                details += `</div>`;
+                if (event.element.text) {
+                    details += `<div><strong>Текст:</strong> ${event.element.text.substring(0, 50)}</div>`;
+                }
+                details += `<div><strong>Координаты:</strong> (${event.x}, ${event.y})</div>`;
+            } else if (event.eventType === 'scroll') {
+                details += `<div><strong>Прокрутка:</strong> ${event.scrollPercent}% (макс: ${event.maxScrollDepth}%)</div>`;
+            } else if (event.eventType === 'page_view') {
+                details += `<div><strong>Заголовок:</strong> ${event.title}</div>`;
+                if (event.loadTime) {
+                    details += `<div><strong>Время загрузки:</strong> ${event.loadTime}ms</div>`;
+                }
+            } else if (event.eventType === 'page_unload') {
+                details += `<div><strong>Время на странице:</strong> ${Math.round(event.totalTimeOnPage / 1000)}s</div>`;
+                details += `<div><strong>Всего событий:</strong> ${event.totalEvents}</div>`;
+            }
+            
+            return details;
+        }
+
+        function filterEvents(type) {
+            currentFilter = type;
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === type) {
+                    btn.className = 'filter-btn px-3 py-1 rounded bg-blue-500 text-white';
+                } else {
+                    btn.className = 'filter-btn px-3 py-1 rounded bg-gray-200';
+                }
+            });
+            
+            refreshEvents();
+        }
+
+        function clearEvents() {
+            if (window.tracker) {
+                window.tracker.clearEvents();
+                refreshEvents();
+            }
+            localStorage.removeItem('tracker_events');
+            updateStoredEvents();
+        }
+
+        function downloadEvents() {
+            if (!window.tracker) return;
+            
+            const events = window.tracker.getEvents();
+            const dataStr = JSON.stringify(events, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `tracker_events_${Date.now()}.json`;
+            link.click();
+        }
+
+        function updateStoredEvents() {
+            const storedEvents = localStorage.getItem('tracker_events');
+            const storedEventsDiv = document.getElementById('stored-events');
+            
+            if (storedEvents) {
+                const parsed = JSON.parse(storedEvents);
+                storedEventsDiv.textContent = JSON.stringify(parsed, null, 2);
+            } else {
+                storedEventsDiv.textContent = 'Нет сохраненных событий';
+            }
+        }
+
+        // Обновляем каждую секунду
+        updateInterval = setInterval(() => {
+            refreshEvents();
+            updateStoredEvents();
+        }, 1000);
+
+        setTimeout(() => {
+            refreshEvents();
+            updateStoredEvents();
+        }, 500);
+
+        // Тестовая кнопка для генерации событий
+        window.testCustomEvent = function() {
+            if (window.tracker) {
+                window.tracker.track('test_button_click', {
+                    message: 'Это тестовое кастомное событие',
+                    timestamp: new Date().toISOString()
+                });
+            }
+        };
+    </script>
+
+    <!-- Тестовая область -->
+    <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded p-4">
+        <h3 class="font-bold mb-2">Тестовая область</h3>
+        <p class="mb-4 text-sm">Кликайте и скролльте эту страницу, чтобы увидеть трекинг в действии!</p>
+        <button onclick="testCustomEvent()" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+            Отправить кастомное событие
+        </button>
+        <a href="/pages/products/" class="ml-2 bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 inline-block">
+            Перейти на главную
+        </a>
+    </div>
+
+    <!-- Высота для тестирования скролла -->
+    <div class="h-screen mt-8 bg-gradient-to-b from-blue-50 to-purple-50 rounded p-8">
+        <h3 class="text-2xl font-bold">Скролльте вниз!</h3>
+        <p class="mt-4">Эта секция создана для тестирования отслеживания скролла.</p>
+    </div>
+</body>
+</html>
+
