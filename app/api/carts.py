@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
-
 from app.dependencies import get_carts_service, get_current_user, get_products_service
 from app.models import Users
+from app.schemas.carts import UpdateCartItemRequest
 from app.services.cart_service import CartService
 from app.services.product_service import ProductService
 
@@ -65,12 +65,17 @@ async def remove_from_cart(
 @router.put("/update/{product_id}")
 async def update_cart_item(
         product_id: int,
-        quantity: int,
+        request: UpdateCartItemRequest,
         user: Users = Depends(get_current_user),
         cart_service: CartService = Depends(get_carts_service)
 ):
-    await cart_service.update_quantity(user.id, product_id, quantity)
-    return {"message": "Cart updated"}
+    total_cost = await cart_service.update_quantity(user.id, product_id, request.quantity)
+    cart_total = await cart_service.get_total_cost(user.id)
+    return {
+        "message": "Cart updated",
+        "total_cost": total_cost,
+        "cart_total": cart_total
+    }
 
 
 @router.delete("/clear")

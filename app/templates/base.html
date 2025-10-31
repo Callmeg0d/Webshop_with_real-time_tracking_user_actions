@@ -91,8 +91,38 @@
                 }
             }
 
+            // Функция для обновления индикатора корзины
+            window.updateCartBadge = async function() {
+                try {
+                    const response = await fetch("http://localhost:7777/cart/", {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        const cartData = await response.json();
+                        const cartBadge = document.getElementById("cart-badge");
+                        
+                        let totalQuantity = 0;
+                        if (Array.isArray(cartData)) {
+                            totalQuantity = cartData.reduce((sum, item) => sum + (item.quantity || 0), 0);
+                        }
+                        
+                        if (totalQuantity > 0) {
+                            cartBadge.textContent = totalQuantity;
+                            cartBadge.classList.remove("hidden");
+                        } else {
+                            cartBadge.classList.add("hidden");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Ошибка при обновлении корзины:", error);
+                }
+            };
+
             await checkAuth();
             await checkIfProtectedPage();
+            await updateCartBadge();
 
             document.body.addEventListener('click', async function (event) {
                 const link = event.target.closest("a");
@@ -118,8 +148,13 @@
         <ul>
             <li><a href="/pages/products/">Мой магазин</a></li>
         </ul>
-        <ul class="flex gap-x-5">
-            <li><a href="/pages/cart">Корзина</a></li>
+        <ul class="flex gap-x-5 items-center">
+            <li class="relative">
+                <a href="/pages/cart" class="flex items-center gap-2">
+                    Корзина
+                    <span id="cart-badge" class="hidden bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]"></span>
+                </a>
+            </li>
             <li id="auth-button"></li>
         </ul>
     </div>

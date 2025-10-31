@@ -80,6 +80,10 @@
             const data = await response.json();
             document.getElementById(`total-${productId}`).textContent = data.total_cost;
             document.getElementById("cart-total").textContent = data.cart_total;
+            // Обновляем индикатор корзины
+            if (typeof updateCartBadge === 'function') {
+                await updateCartBadge();
+            }
         } else {
             alert("Ошибка обновления количества товара!");
         }
@@ -88,6 +92,9 @@
     async function removeFromCart(productId) {
         const response = await fetch(`/cart/remove/${productId}`, { method: 'DELETE' });
         if (response.ok) {
+            if (typeof updateCartBadge === 'function') {
+                await updateCartBadge();
+            }
             location.reload();
         } else {
             alert("Ошибка при удалении товара!");

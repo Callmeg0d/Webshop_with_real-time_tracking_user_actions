@@ -268,17 +268,25 @@
             const productId = "{{ product.product_id }}";
 
             try {
-                const response = await fetch("/cart/add", {
+                const response = await fetch(`/cart/add/${productId}?quantity=1`, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({ product_id: productId, quantity: 1 })
+                    credentials: "include"
                 });
+
+                if (response.ok) {
+                    // Обновляем индикатор корзины
+                    if (typeof updateCartBadge === 'function') {
+                        await updateCartBadge();
+                    }
+                } else {
+                    const error = await response.json();
+                    console.error("Ошибка:", error);
+                    alert("Не удалось добавить товар в корзину");
+                }
 
             } catch (error) {
                 console.error("Ошибка запроса:", error);
+                alert("Ошибка при добавлении в корзину");
             }
         });
     });

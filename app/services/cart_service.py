@@ -61,13 +61,14 @@ class CartService:
         cart_items = await self.cart_repository.get_cart_items_with_products(user_id=user_id)
         return cart_items
 
-    async def update_quantity(self, user_id: int, product_id: int, quantity: int) -> None:
-        await self.cart_repository.update_quantity(
+    async def update_quantity(self, user_id: int, product_id: int, quantity: int) -> int:
+        total_cost = await self.cart_repository.update_quantity(
             user_id=user_id,
             product_id=product_id,
             quantity=quantity,
         )
         await self.db.commit()
+        return total_cost
 
     async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[ShoppingCarts]:
         return await self.cart_repository.get_cart_item_by_id(user_id=user_id, product_id=product_id)
