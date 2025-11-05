@@ -4,6 +4,7 @@ from app.models import ShoppingCarts
 class CartMapper:
     @staticmethod
     def to_entity(orm_model: ShoppingCarts) -> CartItem:
+        """Преобразует ORM модель в domain entity."""
         return CartItem(
             cart_id=orm_model.cart_id,
             user_id=orm_model.user_id,
@@ -14,6 +15,7 @@ class CartMapper:
 
     @staticmethod
     def to_orm(entity: CartItem) -> dict:
+        """Преобразует entity в данные для ORM."""
         return {
             # cart_id не включаем - БД сама присвоит при создании
             "user_id": entity.user_id,
@@ -21,11 +23,3 @@ class CartMapper:
             "quantity": entity.quantity,
             "total_cost": entity.total_cost
         }
-
-    @staticmethod
-    def get_id(entity: CartItem) -> int | None:
-        return entity.cart_id
-
-    @staticmethod
-    def get_id_column_name() -> str:
-        return "cart_id"
