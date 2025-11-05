@@ -17,6 +17,7 @@ from app.api.reviews import router as router_reviews
 from app.api.users import router_auth as router_users_auth
 from app.api.users import router_users as router_users
 from app.api.pages import router as router_pages
+from app.api.categories import router as router_categories
 from app.messaging.broker import broker
 from app.messaging.handlers import router
 
@@ -52,6 +53,7 @@ app.include_router(router_carts)
 app.include_router(router_orders)
 app.include_router(router_reviews)
 app.include_router(router_pages)
+app.include_router(router_categories)
 # Подключение CORS, чтобы запросы к API могли приходить из браузера
 origins = [
     "http://127.0.0.1:8000",
