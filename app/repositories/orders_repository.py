@@ -1,16 +1,19 @@
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.repositories.base_repository import BaseRepository
 from sqlalchemy import select
+
+from app.domain.entities.orders import OrderItem
+from app.domain.mappers.order import OrderMapper
 from app.models.orders import Orders
 
 
-class OrdersRepository(BaseRepository[Orders]):
+class OrdersRepository:
     """
     Репозиторий для работы с заказами.
 
-    Предоставляет методы для создания и получения заказов пользователей.
+    Работает с domain entities (OrderItem), используя маппер для преобразования
+    между entities и ORM моделями.
     """
 
     def __init__(self, db: AsyncSession):
@@ -20,23 +23,27 @@ class OrdersRepository(BaseRepository[Orders]):
         Args:
             db: Асинхронная сессия базы данных
         """
-        super().__init__(Orders, db)
+        self.db = db
+        self.mapper = OrderMapper()
 
-    async def create_order(self, order_data: dict) -> Orders:
+    async def create_order(self, order: OrderItem) -> OrderItem:
         """
         Создаёт новый заказ.
 
         Args:
-            order_data: Словарь с данными заказа
+            order: Domain entity заказа для создания
 
         Returns:
-            Созданный объект заказа
+            Созданная domain entity заказа с ID из БД
         """
-        order = Orders(**order_data)
-        self.db.add(order)
-        return order
+        orm_data = self.mapper.to_orm(order)
+        orm_model = Orders(**orm_data)
+        self.db.add(orm_model)
+        await self.db.flush()
 
-    async def get_by_user_id(self, user_id: int) -> List[Orders]:
+        return self.mapper.to_entity(orm_model)
+
+    async def get_by_user_id(self, user_id: int) -> List[OrderItem]:
         """
         Получает все заказы пользователя.
 
@@ -44,9 +51,15 @@ class OrdersRepository(BaseRepository[Orders]):
             user_id: ID пользователя
 
         Returns:
-            Список всех заказов пользователя
+            Список всех domain entities заказов пользователя
         """
         result = await self.db.execute(
             select(Orders).where(Orders.user_id == user_id)
         )
-        return list(result.scalars().all())
+        orm_models = list(result.scalars().all())
+        
+        return [
+            self.mapper.to_entity(orm_model)
+            for orm_model in orm_models
+            if orm_model is not None
+        ]

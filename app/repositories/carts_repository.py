@@ -4,15 +4,16 @@ from sqlalchemy import select, delete, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import ShoppingCarts, Products
-from app.repositories.base_repository import BaseRepository
+from app.domain.entities.cart import CartItem
+from app.domain.mappers.cart import CartMapper
 
 
-class CartsRepository(BaseRepository[ShoppingCarts]):
+class CartsRepository:
     """
-   Репозиторий для работы с корзиной покупок.
+    Репозиторий для работы с корзиной товаров.
 
-   Предоставляет методы для управления товарами в корзине пользователя,
-   включая добавление, удаление, обновление и получение информации о корзине.
+    Работает с domain entities (CartItem), используя маппер для преобразования
+    между entities и ORM моделями.
     """
 
     def __init__(self, db: AsyncSession):
@@ -22,7 +23,8 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
         Args:
             db: Асинхронная сессия базы данных
         """
-        super().__init__(ShoppingCarts, db)
+        self.db = db
+        self.mapper = CartMapper()
 
     async def clear_cart(self, user_id: int) -> None:
         """
@@ -96,7 +98,7 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
         )
 
     async def add_cart_item(self, user_id: int, product_id: int,
-                            quantity: int, total_cost: float) -> ShoppingCarts:
+                            quantity: int, total_cost: float) -> CartItem:
         """
         Добавляет новый товар в корзину.
 
@@ -107,16 +109,23 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
             total_cost: Общая стоимость
 
         Returns:
-            Созданный объект корзины
+            Созданная domain entity корзины
         """
-        cart_item = ShoppingCarts(
+        cart_entity = CartItem(
+            cart_id=None,  # None при создании
             user_id=user_id,
             product_id=product_id,
             quantity=quantity,
-            total_cost=total_cost
+            total_cost=int(total_cost)
         )
-        self.db.add(cart_item)
-        return cart_item
+
+        orm_data = self.mapper.to_orm(cart_entity)
+        orm_model = ShoppingCarts(**orm_data)
+        self.db.add(orm_model)
+        await self.db.flush()  # Получаем cart_id из БД
+        
+        # Возвращаем entity с реальным ID
+        return self.mapper.to_entity(orm_model)
 
     async def remove_cart_item(self, user_id: int, product_id: int) -> None:
         """
@@ -191,7 +200,7 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
         row = result.fetchone()
         return row[0] if row else 0
 
-    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[ShoppingCarts]:
+    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[CartItem]:
         """
         Получает конкретный товар из корзины пользователя.
 
@@ -200,7 +209,7 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
             product_id: ID товара
 
         Returns:
-            Объект корзины если найден, иначе None
+            Domain entity корзины если найдена, иначе None
         """
         result = await self.db.execute(
             select(ShoppingCarts).where(
@@ -208,4 +217,9 @@ class CartsRepository(BaseRepository[ShoppingCarts]):
                 ShoppingCarts.product_id == product_id
             )
         )
-        return result.scalar_one_or_none()
+        orm_model = result.scalar_one_or_none()
+        
+        if not orm_model:
+            return None
+        
+        return self.mapper.to_entity(orm_model)
