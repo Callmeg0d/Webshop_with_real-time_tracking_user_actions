@@ -14,6 +14,7 @@ from app.exceptions import (
     UserIsNotPresentException,
 )
 from app.services.auth_service import AuthService
+from app.services.category_service import CategoryService
 from app.services.cart_service import CartService
 from app.services.order_service import OrderService
 from app.services.product_service import ProductService
@@ -24,7 +25,8 @@ from app.repositories import (
     ProductsRepository,
     CartsRepository,
     UsersRepository,
-    ReviewRepository
+    ReviewRepository,
+    CategoriesRepository
 )
 
 
@@ -85,6 +87,15 @@ async def get_reviews_service(
     )
 
 
+async def get_categories_service(
+        db: AsyncSession = Depends(get_db)
+):
+    return CategoryService(
+        db=db,
+        category_repository=CategoriesRepository(db)
+    )
+
+
 def get_access_token(request: Request):
     token = request.cookies.get("access_token")
     if not token:
@@ -118,7 +129,7 @@ async def get_current_user(
         raise UserIsNotPresentException
 
     user_repository = UsersRepository(db)
-    user = await user_repository.get(int(user_id))
+    user = await user_repository.get_user_by_id(int(user_id))
     if not user:
         raise UserIsNotPresentException
     return user
