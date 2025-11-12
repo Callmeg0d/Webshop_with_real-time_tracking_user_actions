@@ -3,6 +3,7 @@ from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.entities.orders import OrderItem
 from app.repositories import (
     OrdersRepository,
     ProductsRepository,
@@ -14,7 +15,6 @@ from app.exceptions import (
     CannotMakeOrderWithoutItems,
     CannotMakeOrderWithoutAddress
 )
-from app.models import Orders
 from app.messaging.publisher import publish_order_confirmation
 
 class OrderService:
@@ -32,7 +32,7 @@ class OrderService:
         self.db = db
 
 
-    async def create_order(self, user_id: int) -> Orders:
+    async def create_order(self, user_id: int) -> OrderItem:
         # Проверяем наличие адреса
         delivery_address = await self.users_repository.get_delivery_address(user_id)
         if not delivery_address:
@@ -61,16 +61,17 @@ class OrderService:
             for item in cart_items
         ]
 
-        order_data = {
-            "user_id": user_id,
-            "created_at": datetime.now().replace(microsecond=0),
-            "status": "Arriving",
-            "delivery_address": delivery_address,
-            "order_items": order_items,
-            "total_cost": total_cost
-        }
         # Создаём заказ
-        order = await self.orders_repository.create_order(order_data)
+        order = await self.orders_repository.create_order(
+            OrderItem(
+                user_id=user_id,
+                created_at=datetime.now().replace(microsecond=0),
+                status="Arriving",
+                delivery_address=delivery_address,
+                order_items=order_items,
+                total_cost=total_cost
+            )
+        )
 
         # Обновляем остатки
         for item in cart_items:
@@ -82,10 +83,9 @@ class OrderService:
         await self.carts_repository.clear_cart(user_id)
 
         await self.db.commit()
-        await self.db.refresh(order)
 
         # Получаем email пользователя и отправляем подтверждение заказа
-        user = await self.users_repository.get(user_id)
+        user = await self.users_repository.get_user_by_id(user_id)
         if user and user.email:
             order_dict = {
                 "order_id": order.order_id,
@@ -110,7 +110,11 @@ class OrderService:
                 if product_id:
                     product = await self.products_repository.get_product_by_id(int(product_id))
                     if product:
-                        item["product_image_url"] = f"/static/images/{product['image']}.webp"
+                        item["product_image_url"] = (
+                            f"/static/images/{product.image}.webp"
+                            if product.image is not None
+                            else None
+                        )
 
         return [
             {

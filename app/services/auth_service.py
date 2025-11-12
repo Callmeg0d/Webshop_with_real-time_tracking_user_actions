@@ -5,11 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.security import get_password_hash, authenticate_user, create_access_token, create_refresh_token
+from app.domain.entities.users import UserItem
 from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException, TokenExpiredException
-from app.models import Users
 from app.repositories import UsersRepository
 from app.schemas.users import SUserAuth
 from app.messaging.publisher import publish_registration_confirmation
+
 
 class AuthService:
     def __init__(self,
@@ -18,7 +19,7 @@ class AuthService:
         self.db = db
         self.user_repository = user_repository
 
-    async def register_user(self, user_data: SUserAuth) -> Users:
+    async def register_user(self, user_data: SUserAuth) -> UserItem:
         # Проверяем существование пользователя
         existing_user = await self.user_repository.get_user_by_email(user_data.email)
         if existing_user:
@@ -26,13 +27,15 @@ class AuthService:
 
         # Создаем пользователя с хешированным паролем
         hashed_password = get_password_hash(user_data.password)
-        user = await self.user_repository.create_user({
-            "email": user_data.email,
-            "hashed_password": hashed_password
-        })
+        user = await self.user_repository.create_user(
+            UserItem(
+                email=user_data.email,
+                hashed_password=hashed_password,
+                balance=0,
+            )
+        )
 
         await self.db.commit()
-        await self.db.refresh(user)
 
         # Отправляем email с подтверждением регистрации
         await publish_registration_confirmation(user_data.email)
@@ -68,11 +71,11 @@ class AuthService:
 
         # Проверяем наличие user_id
         user_id = payload.get("sub")
-        if not user_id or user_id == "None":
+        if not isinstance(user_id, str) or user_id == "None":
             raise JWTError
 
         # Ищем пользователя
-        user = await self.user_repository.get(int(user_id))
+        user = await self.user_repository.get_user_by_id(int(user_id))
         if not user:
             raise JWTError
 

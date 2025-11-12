@@ -15,7 +15,7 @@ class ProductService:
         self.db = db
 
     async def get_all_products(self) -> List[SProducts]:
-        products = await self.product_repository.get_all()
+        products = await self.product_repository.get_all_products()
         return [SProducts.model_validate(p) for p in products]
 
     async def get_product_by_id(self, product_id: int) -> SProducts:

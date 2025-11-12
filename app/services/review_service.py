@@ -2,6 +2,7 @@ from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.entities.reviews import ReviewItem
 from app.repositories import ReviewRepository
 
 
@@ -21,7 +22,13 @@ class ReviewService:
             rating: int,
             feedback: str
     ) -> None:
-        await self._review_repository.create_review(user_id, product_id, rating, feedback)
+        review = ReviewItem(
+            user_id=user_id,
+            product_id=product_id,
+            rating=rating,
+            feedback=feedback,
+        )
+        await self._review_repository.create_review(review)
         await self.db.commit()
 
     async def get_reviews(self, product_id: int) -> List[dict]:

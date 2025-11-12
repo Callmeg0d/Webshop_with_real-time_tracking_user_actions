@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import ShoppingCarts
+from app.domain.entities.cart import CartItem
 from app.repositories import CartsRepository
 
 
@@ -22,7 +22,7 @@ class CartService:
     async def clear_user_cart(self, user_id: int) -> None:
         await self.cart_repository.clear_cart(user_id=user_id)
 
-    async def get_total_cost(self, user_id: int) -> float:
+    async def get_total_cost(self, user_id: int) -> int:
         total_cost = await self.cart_repository.get_total_cost(user_id=user_id)
         return total_cost
 
@@ -31,7 +31,7 @@ class CartService:
             user_id: int,
             product_id: int,
             quantity_add: int,
-            cost_add: float
+            cost_add: int
     ) -> None:
         await self.cart_repository.update_cart_item(
             user_id=user_id,
@@ -41,7 +41,12 @@ class CartService:
         )
         await self.db.commit()
 
-    async def add_cart_item(self, user_id: int, product_id: int, quantity: int, total_cost: float) -> None:
+    async def add_cart_item(self,
+                            user_id: int,
+                            product_id: int,
+                            quantity: int,
+                            total_cost: int
+    ) -> None:
         await self.cart_repository.add_cart_item(
             user_id=user_id,
             product_id=product_id,
@@ -70,6 +75,6 @@ class CartService:
         await self.db.commit()
         return total_cost
 
-    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[ShoppingCarts]:
+    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[CartItem]:
         return await self.cart_repository.get_cart_item_by_id(user_id=user_id, product_id=product_id)
 

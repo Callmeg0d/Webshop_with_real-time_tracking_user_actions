@@ -2,7 +2,7 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Users
+from app.domain.entities.users import UserItem
 from app.repositories import UsersRepository
 
 
@@ -15,10 +15,9 @@ class UserService:
         self.user_repository = user_repository
         self.db = db
 
-    async def create_user(self, user_data: dict) -> Users:
+    async def create_user(self, user_data: UserItem) -> UserItem:
         user = await self.user_repository.create_user(user_data)
         await self.db.commit()
-        await self.db.refresh(user)
         return user
 
     async def get_delivery_address(self, user_id: int) -> Optional[str]:
