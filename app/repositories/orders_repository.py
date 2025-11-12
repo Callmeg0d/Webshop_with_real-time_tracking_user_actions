@@ -9,12 +9,10 @@ from app.models.orders import Orders
 
 
 class OrdersRepository:
-    """
-    Репозиторий для работы с заказами.
+    """Репозиторий для работы с заказами.
 
     Работает с domain entities (OrderItem), используя маппер для преобразования
-    между entities и ORM моделями.
-    """
+    между entities и ORM моделями."""
 
     def __init__(self, db: AsyncSession):
         """
@@ -31,10 +29,10 @@ class OrdersRepository:
         Создаёт новый заказ.
 
         Args:
-            order: Domain entity заказа для создания
+            order: Доменная сущность заказа, подготовленная слоем сервисов.
 
         Returns:
-            Созданная domain entity заказа с ID из БД
+            Доменная сущность заказа с присвоенным идентификатором.
         """
         orm_data = self.mapper.to_orm(order)
         orm_model = Orders(**orm_data)
@@ -48,10 +46,10 @@ class OrdersRepository:
         Получает все заказы пользователя.
 
         Args:
-            user_id: ID пользователя
+            user_id: Идентификатор пользователя.
 
         Returns:
-            Список всех domain entities заказов пользователя
+            Список доменных сущностей заказов пользователя.
         """
         result = await self.db.execute(
             select(Orders).where(Orders.user_id == user_id)

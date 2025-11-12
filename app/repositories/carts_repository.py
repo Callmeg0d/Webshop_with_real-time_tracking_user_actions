@@ -58,7 +58,7 @@ class CartsRepository:
         items = result.mappings().all()
         return [dict(item) for item in items]
 
-    async def get_total_cost(self, user_id: int) -> float:
+    async def get_total_cost(self, user_id: int) -> int:
         """
         Получает общую стоимость товаров в корзине.
 
@@ -72,10 +72,10 @@ class CartsRepository:
             select(func.sum(ShoppingCarts.total_cost))
             .where(ShoppingCarts.user_id == user_id)
         )
-        return result.scalar() or 0.0
+        return result.scalar() or 0
 
     async def update_cart_item(self, user_id: int, product_id: int,
-                               quantity_add: int, cost_add: float) -> None:
+                               quantity_add: int, cost_add: int) -> None:
         """
         Увеличивает количество и стоимость товара в корзине.
 
@@ -98,7 +98,7 @@ class CartsRepository:
         )
 
     async def add_cart_item(self, user_id: int, product_id: int,
-                            quantity: int, total_cost: float) -> CartItem:
+                            quantity: int, total_cost: int) -> CartItem:
         """
         Добавляет новый товар в корзину.
 

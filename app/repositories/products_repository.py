@@ -3,16 +3,17 @@ from typing import List, Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Products, Categories
-from app.repositories.base_repository import BaseRepository
+from app.domain.entities.product import ProductItem
+from app.domain.mappers.product import ProductMapper
+from app.models import Products
 
 
-class ProductsRepository(BaseRepository[Products]):
+class ProductsRepository:
     """
     Репозиторий для работы с товарами.
 
-    Предоставляет методы для управления товарами, включая получение информации,
-    обновление количества на складе и получение цен.
+    Работает с domain entities (ProductItem), используя маппер для преобразования
+    между entities и ORM моделями.
     """
 
     def __init__(self, db: AsyncSession):
@@ -22,7 +23,8 @@ class ProductsRepository(BaseRepository[Products]):
         Args:
             db: Асинхронная сессия базы данных
         """
-        super().__init__(Products, db)
+        self.db = db
+        self.mapper = ProductMapper()
 
     async def get_stock_by_ids(self, product_ids: List[int]) -> dict:
         """
@@ -73,30 +75,29 @@ class ProductsRepository(BaseRepository[Products]):
         )
         return result.scalar_one_or_none()
 
-    async def get_product_by_id(self, product_id: int) -> Optional[dict]:
+    async def get_product_by_id(self, product_id: int) -> Optional[ProductItem]:
         """
-        Получает полную информацию о товаре по его ID с названием категории.
+        Возвращает доменную сущность товара по идентификатору.
 
         Args:
-            product_id: ID товара
+            product_id: Идентификатор товара.
 
         Returns:
-            Словарь с информацией о товаре если найден, иначе None
+            `ProductItem` если найден, иначе `None`.
         """
         result = await self.db.execute(
-            select(
-                Products.product_id,
-                Products.name,
-                Products.description,
-                Products.price,
-                Products.product_quantity,
-                Products.image,
-                Products.features,
-                Products.category_id,
-                Categories.name.label("category_name"),
-            )
-            .join(Categories, Products.category_id == Categories.id)
-            .where(Products.product_id == product_id)
+            select(Products).where(Products.product_id == product_id)
         )
-        row = result.mappings().first()
-        return dict(row) if row else None
+        orm_product = result.scalar_one_or_none()
+        return self.mapper.to_entity(orm_product) if orm_product else None
+
+    async def get_all_products(self) -> List[ProductItem]:
+        """Возвращает список всех товаров в виде доменных сущностей."""
+        result = await self.db.execute(select(Products))
+        orm_models = list(result.scalars().all())
+        return [
+            self.mapper.to_entity(orm_model)
+            for orm_model in orm_models
+            if orm_model is not None
+        ]
+

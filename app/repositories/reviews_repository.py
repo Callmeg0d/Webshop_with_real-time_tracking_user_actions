@@ -1,17 +1,19 @@
-from typing import List
+from typing import Any, List
 
-from sqlalchemy import insert, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.entities.reviews import ReviewItem
+from app.domain.mappers.review import ReviewMapper
 from app.models import Reviews, Users
-from app.repositories.base_repository import BaseRepository
 
 
-class ReviewRepository(BaseRepository[Reviews]):
+class ReviewRepository:
     """
     Репозиторий для работы с отзывами.
 
-    Предоставляет методы для создания и получения отзывов о товарах.
+    Работает с domain entities (ReviewItem), используя маппер для преобразования
+    между entities и ORM моделями.
     """
 
     def __init__(self, db: AsyncSession):
@@ -21,41 +23,37 @@ class ReviewRepository(BaseRepository[Reviews]):
         Args:
             db: Асинхронная сессия базы данных
         """
-        super().__init__(Reviews, db)
+        self.db = db
+        self.mapper = ReviewMapper()
 
-    async def create_review(self, user_id: int, product_id: int, rating: int, feedback: str) -> Reviews:
+    async def create_review(self, review: ReviewItem) -> ReviewItem:
         """
         Создаёт новый отзыв о товаре.
 
         Args:
-            user_id: ID пользователя
-            product_id: ID товара
-            rating: Оценка товара
-            feedback: Текст отзыва
+            review: Доменная сущность отзыва, подготовленная слоем сервисов.
 
         Returns:
-            Созданный объект отзыва
+            Доменная сущность отзыва с заполненным `review_id`.
         """
-        review = Reviews(
-            user_id=user_id,
-            product_id=product_id,
-            rating=rating,
-            feedback=feedback,
-        )
-        self.db.add(review)
-        return review
+        orm_data = self.mapper.to_orm(review)
+        orm_model = Reviews(**orm_data)
+        self.db.add(orm_model)
+        await self.db.flush()
 
-    async def get_reviews_with_users(self, product_id: int) -> List[dict]:
+        return self.mapper.to_entity(orm_model)
+
+    async def get_reviews_with_users(self, product_id: int) -> List[dict[str, Any]]:
         """
         Получает отзывы по товару вместе с email авторов.
 
-        Объединяет данные отзывов с информацией о пользователях.
+        Объединяет доменные данные отзывов с информацией о пользователях.
 
         Args:
-            product_id: ID товара
+            product_id: Идентификатор товара.
 
         Returns:
-            Список словарей с информацией об отзывах и авторах
+            Список DTO со связкой `user_email`, `rating`, `feedback`.
         """
         result = await self.db.execute(
             select(Reviews, Users.email)
