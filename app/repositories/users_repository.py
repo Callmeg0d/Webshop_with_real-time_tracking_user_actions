@@ -4,16 +4,17 @@ from pydantic import EmailStr
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.entities.users import UserItem
+from app.domain.mappers.user import UserMapper
 from app.models import Users
-from app.repositories.base_repository import BaseRepository
 
 
-class UsersRepository(BaseRepository[Users]):
+class UsersRepository:
     """
-    Репозиторий для работы с пользователями.
+    Репозиторий для работы с юзерами.
 
-    Предоставляет методы для управления пользователями, включая создание,
-    поиск и обновление данных пользователей.
+    Работает с domain entities (UserItem), используя маппер для преобразования
+    между entities и ORM моделями.
     """
 
     def __init__(self, db: AsyncSession):
@@ -23,60 +24,85 @@ class UsersRepository(BaseRepository[Users]):
         Args:
             db: Асинхронная сессия базы данных
         """
-        super().__init__(Users, db)
+        self.db = db
+        self.mapper = UserMapper()
 
-    async def get_user_by_email(self, email: str | EmailStr) -> Optional[Users]:
+    async def get_user_by_email(self, email: str | EmailStr) -> Optional[UserItem]:
         """
         Находит пользователя по email.
 
         Args:
-            email: Email пользователя
+            email: Email пользователя.
 
         Returns:
-            Объект пользователя если найден, иначе None
+            Доменная сущность пользователя либо `None`.
         """
         result = await self.db.execute(
             select(Users).where(Users.email == email)
         )
-        return result.scalar_one_or_none()
+        orm_data = result.scalar_one_or_none()
 
-    async def create_user(self, user_data: dict) -> Users:
+        return self.mapper.to_entity(orm_data) if orm_data else None
+
+    async def get_user_by_id(self, user_id: int) -> Optional[UserItem]:
+        """
+        Находит пользователя по идентификатору.
+
+        Args:
+            user_id: Идентификатор пользователя.
+
+        Returns:
+            Доменная сущность пользователя либо `None`.
+        """
+        result = await self.db.execute(
+            select(Users).where(Users.id == user_id)
+        )
+        orm_data = result.scalar_one_or_none()
+
+        return self.mapper.to_entity(orm_data) if orm_data else None
+
+    async def create_user(self, user: UserItem) -> UserItem:
         """
         Создаёт нового пользователя.
 
         Args:
-            user_data: Словарь с данными пользователя
+            user: Доменная сущность пользователя, собранная сервисом.
 
         Returns:
-            Созданный объект пользователя
+            Доменная сущность с присвоенным `id`.
         """
-        user = Users(**user_data)
-        self.db.add(user)
-        return user
+        orm_data = self.mapper.to_orm(user)
+        orm_model = Users(**orm_data)
+        self.db.add(orm_model)
+        await self.db.flush()
+
+        return self.mapper.to_entity(orm_model)
 
     async def get_delivery_address(self, user_id: int) -> Optional[str]:
         """
         Получает адрес доставки пользователя.
 
         Args:
-            user_id: ID пользователя
+            user_id: Идентификатор пользователя.
 
         Returns:
-            Адрес доставки если найден, иначе None
+            Адрес доставки либо `None`, если пользователь не найден.
         """
-        user = await self.get(user_id)
-        return user.delivery_address if user else None
+        result = await self.db.execute(
+            select(Users.delivery_address).where(Users.id == user_id)
+        )
+        return result.scalar_one_or_none()
 
-    async def change_delivery_address(self, user_id: int, new_address: str) -> Optional[str]:
+    async def change_delivery_address(self, user_id: int, new_address: str) -> str:
         """
         Изменяет адрес доставки пользователя.
 
         Args:
-            user_id: ID пользователя
-            new_address: Новый адрес доставки
+            user_id: Идентификатор пользователя.
+            new_address: Новый адрес доставки.
 
         Returns:
-            Новый адрес доставки
+            Новый адрес доставки.
         """
         await self.db.execute(
             update(Users).
@@ -85,16 +111,16 @@ class UsersRepository(BaseRepository[Users]):
         )
         return new_address
 
-    async def change_user_name(self, user_id: int, new_name: str) -> Optional[str]:
+    async def change_user_name(self, user_id: int, new_name: str) -> str:
         """
         Изменяет имя пользователя.
 
         Args:
-            user_id: ID пользователя
-            new_name: Новое имя пользователя
+            user_id: Идентификатор пользователя.
+            new_name: Новое имя пользователя.
 
         Returns:
-            Новое имя пользователя
+            Новое имя пользователя.
         """
         await self.db.execute(
             update(Users).where(Users.id == user_id).values(name=new_name)
