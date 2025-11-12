@@ -45,7 +45,7 @@ class ReviewRepository:
 
     async def get_reviews_with_users(self, product_id: int) -> List[dict[str, Any]]:
         """
-        Получает отзывы по товару вместе с email авторов.
+        Получает отзывы по товару вместе с email и именем авторов.
 
         Объединяет доменные данные отзывов с информацией о пользователях.
 
@@ -53,18 +53,19 @@ class ReviewRepository:
             product_id: Идентификатор товара.
 
         Returns:
-            Список DTO со связкой `user_email`, `rating`, `feedback`.
+            Список DTO со связкой `user_email`, `user_name`, `rating`, `feedback`.
         """
         result = await self.db.execute(
-            select(Reviews, Users.email)
+            select(Reviews, Users.email, Users.name)
             .join(Users, Reviews.user_id == Users.id)
             .where(Reviews.product_id == product_id)
         )
         # Оставим прям тут, так как просто DTO для чтения
         reviews = []
-        for review, user_email in result.fetchall():
+        for review, user_email, user_name in result.fetchall():
             reviews.append({
                 "user_email": user_email or "Анонимный пользователь",
+                "user_name": user_name,
                 "rating": review.rating,
                 "feedback": review.feedback
             })
