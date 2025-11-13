@@ -46,6 +46,33 @@
     {% endif %}
 </div>
 
+// Модальное окно подтверждения заказа
+<div id="orderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    // Затемнённый фон
+    <div id="modalBackdrop" class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+
+    <div id="modalContent" class="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all animate-modal-appear">
+        // Иконка успеха
+        <div class="flex justify-center mb-4">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Заказ успешно оформлен!</h2>
+
+        <p class="text-center text-gray-600 mb-6">
+            Ваш заказ принят в обработку. Мы отправим вам подтверждение на email.
+        </p>
+
+        <button onclick="closeOrderModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            Отлично!
+        </button>
+    </div>
+</div>
+
 <script>
     async function updateQuantity(productId, change) {
         let input = document.getElementById(`qty-${productId}`);
@@ -70,51 +97,108 @@
     }
 
     async function updateCart(productId, quantity) {
-        const response = await fetch(`/cart/update/${productId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ quantity: quantity })
-        });
+        try {
+            const response = await (window.authFetch || fetch)(`/cart/update/${productId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quantity: quantity })
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            document.getElementById(`total-${productId}`).textContent = data.total_cost;
-            document.getElementById("cart-total").textContent = data.cart_total;
-            // Обновляем индикатор корзины
-            if (typeof updateCartBadge === 'function') {
-                await updateCartBadge();
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById(`total-${productId}`).textContent = data.total_cost;
+                document.getElementById("cart-total").textContent = data.cart_total;
+                // Обновляем индикатор корзины
+                if (typeof updateCartBadge === 'function') {
+                    await updateCartBadge();
+                }
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка обновления количества товара" }));
+                alert(errorData.detail || "Ошибка обновления количества товара!");
             }
-        } else {
+        } catch (error) {
+            console.error("Ошибка при обновлении корзины:", error);
             alert("Ошибка обновления количества товара!");
         }
     }
 
     async function removeFromCart(productId) {
-        const response = await fetch(`/cart/remove/${productId}`, { method: 'DELETE' });
-        if (response.ok) {
-            if (typeof updateCartBadge === 'function') {
-                await updateCartBadge();
+        try {
+            const response = await (window.authFetch || fetch)(`/cart/remove/${productId}`, { 
+                method: 'DELETE' 
+            });
+            
+            if (response.ok) {
+                if (typeof updateCartBadge === 'function') {
+                    await updateCartBadge();
+                }
+                location.reload();
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка при удалении товара" }));
+                alert(errorData.detail || "Ошибка при удалении товара!");
             }
-            location.reload();
-        } else {
+        } catch (error) {
+            console.error("Ошибка при удалении товара:", error);
             alert("Ошибка при удалении товара!");
         }
     }
 
     async function checkout() {
-        const response = await fetch("/orders/checkout", {
-            method: "POST",
-            credentials: "include"
-        });
+        try {
+            const response = await (window.authFetch || fetch)("/orders/create", {
+                method: "POST"
+            });
 
-        if (response.ok) {
-            alert("Заказ успешно оформлен!");
-            location.reload();
-        } else {
-            const errorData = await response.json();
-            alert(errorData.detail);
+            if (response.ok) {
+                showOrderModal();
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Произошла ошибка при оформлении заказа" }));
+                alert(errorData.detail || "Произошла ошибка при оформлении заказа");
+            }
+        } catch (error) {
+            console.error("Ошибка при оформлении заказа:", error);
+            alert("Произошла ошибка при оформлении заказа");
         }
     }
+
+    function showOrderModal() {
+        const modal = document.getElementById("orderModal");
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeOrderModal() {
+        const modal = document.getElementById("orderModal");
+        modal.classList.add("hidden");
+        document.body.style.overflow = "";
+        location.reload();
+    }
+
+    // Закрытие модального окна при клике на затемнённый фон
+    document.addEventListener("DOMContentLoaded", function() {
+        const modal = document.getElementById("orderModal");
+        const modalBackdrop = document.getElementById("modalBackdrop");
+        
+        if (modalBackdrop) {
+            modalBackdrop.addEventListener("click", function() {
+                closeOrderModal();
+            });
+        }
+
+        const modalContent = document.getElementById("modalContent");
+        if (modalContent) {
+            modalContent.addEventListener("click", function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        // Закрытие по Escape
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+                closeOrderModal();
+            }
+        });
+    });
 </script>
 
 <style>
@@ -151,6 +235,22 @@
     .btn__del:hover {
         color: #cc0000;
         transform: scale(1.2);
+    }
+
+    /* Анимация появления модального окна */
+    @keyframes modalAppear {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .animate-modal-appear {
+        animation: modalAppear 0.3s ease-out;
     }
 </style>
 {% endblock %}
