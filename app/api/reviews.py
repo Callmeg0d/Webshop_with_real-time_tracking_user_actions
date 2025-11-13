@@ -26,11 +26,11 @@ async def create_review(
         user: Users = Depends(get_current_user),
         review_service: ReviewService = Depends(get_reviews_service)
 ):
-    await review_service.create_review(
+    review = await review_service.create_review(
         user_id=user.id,
         product_id=product_id,
         rating=review_data.rating,
         feedback=review_data.feedback
     )
-    return {"message": "Review created successfully"}
+    return review
 
