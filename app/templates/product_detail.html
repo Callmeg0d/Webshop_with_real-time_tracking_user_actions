@@ -143,6 +143,22 @@
     .review-form-container button:hover {
         background-color: #0056b3;
     }
+
+    /* Анимация появления модального окна */
+    @keyframes modalAppear {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .animate-modal-appear {
+        animation: modalAppear 0.3s ease-out;
+    }
 </style>
 {% endblock %}
 
@@ -222,6 +238,32 @@
     </div>
 </div>
 
+// Модальное окно подтверждения отзыва
+<div id="reviewModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    // Затемнённый фон
+    <div id="reviewModalBackdrop" class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+
+    <div id="reviewModalContent" class="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all animate-modal-appear">
+        <div class="flex justify-center mb-4">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Отзыв успешно добавлен!</h2>
+
+        <p class="text-center text-gray-600 mb-6">
+            Спасибо за ваш отзыв. Он поможет другим покупателям сделать правильный выбор.
+        </p>
+
+        <button onclick="closeReviewModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            Отлично!
+        </button>
+    </div>
+</div>
+
 <script>
     document.getElementById("review-form").addEventListener("submit", async function(event) {
         event.preventDefault();
@@ -230,63 +272,115 @@
         let rating = document.getElementById("rating").value;
         let feedback = document.getElementById("feedback").value;
 
-        let response = await fetch("/reviews", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                product_id: productId,
-                rating: parseInt(rating),
-                feedback: feedback
-            })
-        });
+        try {
+            const response = await (window.authFetch || fetch)(`/reviews/${productId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    rating: parseInt(rating),
+                    feedback: feedback
+                })
+            });
 
-        if (response.ok) {
-            let newReview = await response.json();
-            let reviewsContainer = document.getElementById("reviews-container");
+            if (response.ok) {
+                let newReview = await response.json();
+                let reviewsContainer = document.getElementById("reviews-container");
 
-            let reviewElement = document.createElement("div");
-            reviewElement.classList.add("review");
-            reviewElement.innerHTML = `<p><strong>${newReview.user_name}</strong> (${newReview.rating}/5)</p>
-                                       <p>${newReview.feedback}</p>`;
-            reviewsContainer.appendChild(reviewElement);
+                // Создаём маскированный email для отображения
+                let displayName = newReview.user_name;
+                if (!displayName || !displayName.trim()) {
+                    const emailParts = newReview.user_email.split('@');
+                    displayName = emailParts[0].substring(0, 3) + '****@' + emailParts[1];
+                }
 
-            document.getElementById("feedback").value = "";
-            alert("Отзыв добавлен!");
-        } else {
+                let reviewElement = document.createElement("div");
+                reviewElement.classList.add("review");
+                reviewElement.innerHTML = `
+                    <p><strong>${displayName}</strong></p>
+                    <p class="review-rating rating-${newReview.rating}">${newReview.rating}/5 ⭐</p>
+                    <p>${newReview.feedback}</p>
+                `;
+                reviewsContainer.insertBefore(reviewElement, reviewsContainer.firstChild);
+
+                document.getElementById("feedback").value = "";
+                document.getElementById("rating").value = "5";
+                showReviewModal();
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка при добавлении отзыва" }));
+                alert(errorData.detail || "Ошибка при добавлении отзыва.");
+            }
+        } catch (error) {
+            console.error("Ошибка при добавлении отзыва:", error);
             alert("Ошибка при добавлении отзыва.");
         }
     });
 </script>
 
 <script>
+    function showReviewModal() {
+        const modal = document.getElementById("reviewModal");
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeReviewModal() {
+        const modal = document.getElementById("reviewModal");
+        modal.classList.add("hidden");
+        document.body.style.overflow = "";
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
+        // Обработчик для добавления товара в корзину
         const addToCartButton = document.querySelector(".add-to-cart");
+        if (addToCartButton) {
+            addToCartButton.addEventListener("click", async function() {
+                const productId = "{{ product.product_id }}";
 
-        addToCartButton.addEventListener("click", async function() {
-            const productId = "{{ product.product_id }}";
+                try {
+                    const response = await (window.authFetch || fetch)(`/cart/add/${productId}?quantity=1`, {
+                        method: "POST"
+                    });
 
-            try {
-                const response = await fetch(`/cart/add/${productId}?quantity=1`, {
-                    method: "POST",
-                    credentials: "include"
-                });
-
-                if (response.ok) {
-                    // Обновляем индикатор корзины
-                    if (typeof updateCartBadge === 'function') {
-                        await updateCartBadge();
+                    if (response.ok) {
+                        // Обновляем индикатор корзины
+                        if (typeof updateCartBadge === 'function') {
+                            await updateCartBadge();
+                        }
+                    } else {
+                        const errorData = await response.json().catch(() => ({ detail: "Не удалось добавить товар в корзину" }));
+                        console.error("Ошибка:", errorData);
+                        alert(errorData.detail || "Не удалось добавить товар в корзину");
                     }
-                } else {
-                    const error = await response.json();
-                    console.error("Ошибка:", error);
-                    alert("Не удалось добавить товар в корзину");
+                } catch (error) {
+                    console.error("Ошибка запроса:", error);
+                    alert("Ошибка при добавлении в корзину");
                 }
+            });
+        }
 
-            } catch (error) {
-                console.error("Ошибка запроса:", error);
-                alert("Ошибка при добавлении в корзину");
+        // Обработчики для модального окна отзыва
+        const reviewModal = document.getElementById("reviewModal");
+        const reviewModalBackdrop = document.getElementById("reviewModalBackdrop");
+        const reviewModalContent = document.getElementById("reviewModalContent");
+        
+        if (reviewModalBackdrop) {
+            reviewModalBackdrop.addEventListener("click", function() {
+                closeReviewModal();
+            });
+        }
+
+        if (reviewModalContent) {
+            reviewModalContent.addEventListener("click", function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        // Закрытие по Escape
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape" && reviewModal && !reviewModal.classList.contains("hidden")) {
+                closeReviewModal();
             }
         });
     });

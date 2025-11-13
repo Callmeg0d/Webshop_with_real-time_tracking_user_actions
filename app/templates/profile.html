@@ -186,20 +186,21 @@
             }
 
             try {
-                const response = await fetch("/users/name", {
+                const response = await (window.authFetch || fetch)("/users/name", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ new_name: newName }),
-                    credentials: "include",
                 });
 
                 if (response.ok) {
                     location.reload();
                 } else {
-                    alert("Ошибка при обновлении имени.");
+                    const errorData = await response.json().catch(() => ({ detail: "Ошибка при обновлении имени" }));
+                    alert(errorData.detail || "Ошибка при обновлении имени.");
                 }
             } catch (error) {
                 console.error("Ошибка при изменении имени:", error);
+                alert("Ошибка при обновлении имени.");
             }
         });
 
@@ -254,20 +255,21 @@
             }
 
             try {
-                const response = await fetch("/users/address", {
+                const response = await (window.authFetch || fetch)("/users/address", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ new_address: newAddress }),
-                    credentials: "include",
                 });
 
                 if (response.ok) {
                     location.reload();
                 } else {
-                    alert("Ошибка при обновлении адреса.");
+                    const errorData = await response.json().catch(() => ({ detail: "Ошибка при обновлении адреса" }));
+                    alert(errorData.detail || "Ошибка при обновлении адреса.");
                 }
             } catch (error) {
                 console.error("Ошибка при изменении адреса:", error);
+                alert("Ошибка при обновлении адреса.");
             }
         });
 
@@ -324,9 +326,8 @@
 <script>
     document.getElementById("logout-button").addEventListener("click", async function() {
         try {
-            const response = await fetch("/auth/logout", {
+            const response = await (window.authFetch || fetch)("/auth/logout", {
                 method: "POST",
-                credentials: "include",
             });
 
             if (response.ok) {
@@ -344,16 +345,15 @@
 
     async function loadOrders() {
         try {
-            const response = await fetch("/orders", {
+            const response = await (window.authFetch || fetch)("/orders", {
                 method: "GET",
-                credentials: "include",
             });
 
             if (response.ok) {
                 const orders = await response.json();
                 const ordersList = document.getElementById("orders-list");
 
-                if (orders.length === 0) {
+                if (!orders || orders.length === 0) {
                     ordersList.innerHTML = "<li>У вас пока нет заказов.</li>";
                     return;
                 }
@@ -363,19 +363,19 @@
                     orderItem.classList.add("order-item");
 
                     orderItem.innerHTML = `
-                        <p><strong>Номер заказа:</strong> ${order.order_id}</p>
+                        <p><strong>Номер заказа:</strong> ${order.id || order.order_id}</p>
                         <p><strong>Дата заказа:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
                         <p><strong>Статус:</strong> ${order.status}</p>
                         <p><strong>Адрес доставки:</strong> ${order.delivery_address}</p>
                         <p><strong>Сумма:</strong> ${order.total_cost} ₽</p>
                         <h4>Товары в заказе:</h4>
                         <ul>
-                            ${order.order_items.map(item => {
+                            ${(order.order_items || []).map(item => {
                                 return `
                                     <li class="order-item-details">
                                         <div class="product-info">
                                             <a href="/pages/product/${item.product_id}" class="product-link">
-                                                <img src="${item.product_image_url}" alt="Продукт ${item.product_id}" class="product-image"/>
+                                                <img src="${item.product_image_url || '/static/images/default.webp'}" alt="Продукт ${item.product_id}" class="product-image"/>
                                             </a>
                                             <p class="product-quantity">Количество: ${item.quantity}</p>
                                         </div>
@@ -387,7 +387,8 @@
                     ordersList.appendChild(orderItem);
                 });
             } else {
-                console.error("Ошибка при получении заказов");
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка при получении заказов" }));
+                console.error("Ошибка при получении заказов:", errorData.detail);
             }
         } catch (error) {
             console.error("Ошибка при загрузке заказов:", error);
