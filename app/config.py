@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     KAFKA_HOST: str
     KAFKA_PORT: int
 
-    MODE: str
+    CLICKHOUSE_HOST: str
+    CLICKHOUSE_PORT: int
 
     @property
     def DATABASE_URL(self):

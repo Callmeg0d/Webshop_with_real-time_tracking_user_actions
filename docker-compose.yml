@@ -55,6 +55,38 @@ services:
       echo 'Topics created successfully with 3 partitions'
       "
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhousedata:/var/lib/clickhouse
+      - ./app/clickhouse/init:/docker-entrypoint-initdb.d
+    environment:
+      - CLICKHOUSE_DB=analytics
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:24.8
+    depends_on:
+      clickhouse:
+        condition: service_started
+    volumes:
+      - ./app/clickhouse/init:/docker-entrypoint-initdb.d
+    entrypoint: >
+      sh -c "
+      sleep 5 &&
+      clickhouse-client --host clickhouse --multiquery < /docker-entrypoint-initdb.d/001_create_events.sql &&
+      echo 'ClickHouse schema initialized'
+      "
+    restart: "no"
+
   webshop:
     build:
       context: .
@@ -99,3 +131,4 @@ volumes:
   redisdata:
   grafanadata:
   prometheusdata:
+  clickhousedata:
