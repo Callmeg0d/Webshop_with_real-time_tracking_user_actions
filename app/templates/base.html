@@ -37,7 +37,6 @@
         let refreshPromise = null;
 
         window.authFetch = async function(url, options = {}) {
-            // Если это запрос на refresh или login, используем обычный fetch
             if (url.includes('/auth/refresh') || url.includes('/auth/login') || url.includes('/auth/register')) {
                 return await fetch(url, {
                     ...options,
@@ -51,18 +50,16 @@
                 credentials: 'include'
             });
 
-            // Если получили 401, пытаемся обновить токен
+            // Если получили 401, пытаемся обновить токен в фоне
             if (response.status === 401) {
-                // Если уже обновляем токен, ждём завершения
                 if (isRefreshing && refreshPromise) {
+                    // Ждём, пока другой запрос обновит токен
                     await refreshPromise;
-                    // Повторяем запрос после обновления токена
                     response = await fetch(url, {
                         ...options,
                         credentials: 'include'
                     });
                 } else {
-                    // Начинаем обновление токена
                     isRefreshing = true;
                     refreshPromise = refreshAccessToken();
                     const refreshed = await refreshPromise;
@@ -70,21 +67,10 @@
                     refreshPromise = null;
 
                     if (refreshed) {
-                        // Повторяем оригинальный запрос с новым токеном
                         response = await fetch(url, {
                             ...options,
                             credentials: 'include'
                         });
-                        
-                        // Если снова получили 401, перенаправляем на логин
-                        if (response.status === 401) {
-                            window.location.href = "/pages/login";
-                            return response;
-                        }
-                    } else {
-                        // Если не удалось обновить токен, перенаправляем на логин
-                        window.location.href = "/pages/login";
-                        return response;
                     }
                 }
             }
@@ -111,6 +97,7 @@
 
             // Список защищённых страниц
             const protectedPages = ["/pages/profile", "/pages/cart"];
+            const authPages = ["/pages/login", "/pages/register"];
 
             async function checkAuth() {
                 try {
@@ -171,9 +158,19 @@
                 }
             };
 
-            await checkAuth();
-            await checkIfProtectedPage();
-            await updateCartBadge();
+            const currentPath = window.location.pathname;
+
+            if (!authPages.includes(currentPath)) {
+                await checkAuth();
+                await checkIfProtectedPage();
+                await updateCartBadge();
+            } else {
+                try {
+                    await checkAuth();
+                } catch (e) {
+                    console.error("Ошибка при первоначальной проверке авторизации:", e);
+                }
+            }
 
             document.body.addEventListener('click', async function (event) {
                 const link = event.target.closest("a");
