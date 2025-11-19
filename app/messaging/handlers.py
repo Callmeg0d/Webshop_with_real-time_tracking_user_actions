@@ -35,8 +35,8 @@ async def handle_order_confirmation(order: dict, email_to: EmailStr) -> None:
         server.send_message(msg_context)
 
 
-@router.subscriber("clicks_topic", group_id="analytics")
-async def handle_click_event(event: dict) -> None:
+async def insert_event_to_clickhouse(event: dict) -> None:
+    """Функция для вставки любого события в ClickHouse."""
     ch = await get_clickhouse_client()
 
     ts_ms = event.get("timestamp")
@@ -47,10 +47,25 @@ async def handle_click_event(event: dict) -> None:
 
     element = event.get("element") or {}
 
-    await ch.execute(
-        """
+
+    click_x = event.get("x")  # Может быть None
+    click_y = event.get("y")  # Может быть None
+    click_type = event.get("clickType")
+    element_tag = element.get("tagName")
+    element_id = element.get("id")
+    element_class = element.get("className")
+    element_text = element.get("text")
+
+    event_time_naive = event_time.replace(tzinfo=None)
+    event_time_str = event_time_naive.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+
+    def escape_sql_string(s):
+        if s is None:
+            return "NULL"
+        return f"'{str(s).replace("'", "''")}'"
+
+    sql = f"""
         INSERT INTO analytics.events (
-            event_date,
             event_time,
             event_type,
             session_id,
@@ -67,28 +82,49 @@ async def handle_click_event(event: dict) -> None:
             element_class,
             element_text,
             payload_json
+        ) VALUES (
+            '{event_time_str}',
+            {escape_sql_string(event.get("eventType", ""))},
+            {escape_sql_string(event.get("sessionId", ""))},
+            {escape_sql_string(event.get("pageViewId", ""))},
+            {escape_sql_string(event.get("url", ""))},
+            {escape_sql_string(event.get("pathname", ""))},
+            {escape_sql_string(event.get("referrer", ""))},
+            {escape_sql_string(event.get("userAgent", ""))},
+            {click_x if click_x is not None else "NULL"},
+            {click_y if click_y is not None else "NULL"},
+            {escape_sql_string(click_type)},
+            {escape_sql_string(element_tag)},
+            {escape_sql_string(element_id)},
+            {escape_sql_string(element_class)},
+            {escape_sql_string(element_text)},
+            {escape_sql_string(json.dumps(event, ensure_ascii=False))}
         )
-        VALUES
-        """,
-        [
-            (
-                event_time.date(),
-                event_time,
-                event.get("eventType", ""),
-                event.get("sessionId", ""),
-                event.get("pageViewId", ""),
-                event.get("url", ""),
-                event.get("pathname", ""),
-                event.get("referrer", ""),
-                event.get("userAgent", ""),
-                event.get("x"),
-                event.get("y"),
-                event.get("clickType"),
-                element.get("tagName"),
-                element.get("id"),
-                element.get("className"),
-                element.get("text"),
-                json.dumps(event, ensure_ascii=False),
-            )
-        ],
-    )
+    """
+    
+    await ch.execute(sql)
+
+
+@router.subscriber("clicks_topic", group_id="analytics")
+async def handle_click_event(event: dict) -> None:
+    await insert_event_to_clickhouse(event)
+
+
+@router.subscriber("page_views_topic", group_id="analytics")
+async def handle_page_view_event(event: dict) -> None:
+    await insert_event_to_clickhouse(event)
+
+
+@router.subscriber("scrolls_topic", group_id="analytics")
+async def handle_scroll_event(event: dict) -> None:
+    await insert_event_to_clickhouse(event)
+
+
+@router.subscriber("custom_events_topic", group_id="analytics")
+async def handle_custom_event(event: dict) -> None:
+    await insert_event_to_clickhouse(event)
+
+
+@router.subscriber("other_events_topic", group_id="analytics")
+async def handle_other_event(event: dict) -> None:
+    await insert_event_to_clickhouse(event)
