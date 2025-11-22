@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.dependencies import (
     get_current_user,
+    get_current_user_or_none,
     get_products_service,
     get_carts_service,
-    get_reviews_service
+    get_reviews_service,
 )
 from app.models.users import Users
 from app.services.product_service import ProductService
@@ -46,9 +47,12 @@ async def get_product_page(
 @router.get("/cart")
 async def get_cart_page(
         request: Request,
-        user: Users = Depends(get_current_user),
-        cart_service: CartService = Depends(get_carts_service)
+        user: Users | None = Depends(get_current_user_or_none),
+        cart_service: CartService = Depends(get_carts_service),
 ):
+    if user is None:
+        return RedirectResponse(url="/pages/login", status_code=302)
+
     cart_items = await cart_service.get_cart_items_with_products(user.id)
     total_cart_cost = sum(item.get("total_cost", 0) for item in cart_items)
     return templates.TemplateResponse(
@@ -56,7 +60,7 @@ async def get_cart_page(
         {
             "request": request,
             "cart_items": cart_items,
-            "total_cart_cost": total_cart_cost
+            "total_cart_cost": total_cart_cost,
         },
     )
 
@@ -78,11 +82,17 @@ async def get_product_detail_page(
 
 
 @router.get("/profile")
-async def get_profile(request: Request, user: Users = Depends(get_current_user)):
-    return (templates.TemplateResponse
-            ("profile.html",
-             {"request": request, "user": user})
-            )
+async def get_profile(
+        request: Request,
+        user: Users | None = Depends(get_current_user_or_none),
+):
+    if user is None:
+        return RedirectResponse(url="/pages/login", status_code=302)
+
+    return templates.TemplateResponse(
+        "profile.html",
+        {"request": request, "user": user},
+    )
 
 
 @router.get("/tracker-debug", response_class=HTMLResponse)

@@ -83,6 +83,7 @@ async def get_reviews_service(
 ) -> ReviewService:
     return ReviewService(
         review_repository=ReviewRepository(db),
+        users_repository=UsersRepository(db),
         db=db
     )
 
@@ -109,7 +110,6 @@ def get_refresh_token(request: Request):
         raise TokenExpiredException
     return token
 
-
 async def get_current_user(
     token: str = Depends(get_access_token),
     db: AsyncSession = Depends(get_db)
@@ -132,4 +132,32 @@ async def get_current_user(
     user = await user_repository.get_user_by_id(int(user_id))
     if not user:
         raise UserIsNotPresentException
+    return user
+
+
+async def get_current_user_or_none(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, settings.ALGORITHM
+        )
+    except JWTError:
+        return None
+
+    expire: str | None = payload.get("exp")
+    if (not expire) or int(expire) < datetime.now(tz=timezone.utc).timestamp():
+        return None
+
+    user_id: str | None = payload.get("sub")
+    if not user_id:
+        return None
+
+    user_repository = UsersRepository(db)
+    user = await user_repository.get_user_by_id(int(user_id))
     return user
