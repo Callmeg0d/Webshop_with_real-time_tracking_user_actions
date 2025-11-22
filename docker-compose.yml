@@ -49,9 +49,19 @@ services:
       sleep 10 &&
       kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic registration_confirmation 2>/dev/null || true &&
       kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic order_confirmation 2>/dev/null || true &&
+      kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic clicks_topic 2>/dev/null || true &&
+      kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic page_views_topic 2>/dev/null || true &&
+      kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic scrolls_topic 2>/dev/null || true &&
+      kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic custom_events_topic 2>/dev/null || true &&
+      kafka-topics --delete --if-exists --bootstrap-server kafka:9092 --topic other_events_topic 2>/dev/null || true &&
       sleep 2 &&
       kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic registration_confirmation &&
       kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic order_confirmation &&
+      kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic clicks_topic &&
+      kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic page_views_topic &&
+      kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic scrolls_topic &&
+      kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic custom_events_topic &&
+      kafka-topics --create --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic other_events_topic &&
       echo 'Topics created successfully with 3 partitions'
       "
 
