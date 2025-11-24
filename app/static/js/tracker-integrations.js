@@ -150,6 +150,35 @@
             }
         }
 
+        // === ТРЕКИНГ ФИЛЬТРОВ ===
+        
+        function setupFilterTracking() {
+            // Трекинг применения фильтров
+            document.addEventListener('change', function(e) {
+                const filterElement = e.target.closest('[data-filter]');
+                if (filterElement) {
+                    const filterType = filterElement.dataset.filter;
+                    const filterValue = filterElement.value || filterElement.dataset.value;
+                    
+                    window.tracker.track('filter_applied', {
+                        filterType: filterType,
+                        filterValue: filterValue,
+                        filterName: filterElement.name || filterElement.id
+                    });
+                }
+            });
+            
+            // Трекинг сброса фильтров
+            const resetFilterBtn = document.querySelector('[data-action="reset-filters"]');
+            if (resetFilterBtn) {
+                resetFilterBtn.addEventListener('click', function() {
+                    window.tracker.track('filters_reset', {
+                        timestamp: Date.now()
+                    });
+                });
+            }
+        }
+
         // === ТРЕКИНГ ПОИСКА ===
 
         // Поиск товаров

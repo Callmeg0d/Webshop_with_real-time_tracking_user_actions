@@ -18,6 +18,19 @@
             this.events = [];
             this.sessionStartTime = Date.now();
             this.pageLoadTime = Date.now();
+            
+            // Сохраняем viewport/screen один раз в сессию (не в каждом событии)
+            this.sessionMetadata = {
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
+                screen: {
+                    width: window.screen.width,
+                    height: window.screen.height
+                },
+                userAgent: navigator.userAgent
+            };
 
             this.init();
         }
@@ -81,20 +94,17 @@
                 url: window.location.href,
                 pathname: window.location.pathname,
                 referrer: document.referrer,
-                viewport: {
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                },
-                screen: {
-                    width: window.screen.width,
-                    height: window.screen.height
-                },
-                userAgent: navigator.userAgent,
+                // viewport/screen собираем только в первом событии сессии (в payload_json)
                 ...data
             };
 
             this.events.push(event);
             this.log('Event tracked:', event);
+
+            // Отправка при накоплении батча (каждые 20 событий)
+            if (this.events.length >= 20) {
+                this.sendEvents();
+            }
 
             return event;
         }
@@ -105,7 +115,8 @@
                 title: document.title,
                 loadTime: performance.timing ? 
                     performance.timing.loadEventEnd - performance.timing.navigationStart : null,
-                sessionStartTime: this.sessionStartTime
+                sessionStartTime: this.sessionStartTime,
+                ...this.sessionMetadata
             });
 
             // Трекинг времени на странице при выходе
@@ -128,10 +139,6 @@
             document.addEventListener('click', (e) => {
                 const target = e.target;
                 const clickData = {
-                    x: e.clientX,
-                    y: e.clientY,
-                    pageX: e.pageX,
-                    pageY: e.pageY,
                     element: {
                         tagName: target.tagName,
                         id: target.id || null,
@@ -163,16 +170,8 @@
 
         // Трекинг скроллов
         setupScrollTracking() {
-            let scrollTimeout;
-            let lastScrollTime = 0;
-
-            const trackScroll = () => {
-                const now = Date.now();
-                if (now - lastScrollTime < this.config.scrollThrottle) {
-                    return;
-                }
-                lastScrollTime = now;
-
+            // Собираем максимальную глубину при выходе со страницы
+            window.addEventListener('scroll', () => {
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                 const scrollHeight = document.documentElement.scrollHeight;
                 const clientHeight = document.documentElement.clientHeight;
@@ -182,19 +181,6 @@
                 if (scrollPercent > this.config.maxScrollDepth) {
                     this.config.maxScrollDepth = scrollPercent;
                 }
-
-                this.createEvent('scroll', {
-                    scrollTop: scrollTop,
-                    scrollHeight: scrollHeight,
-                    clientHeight: clientHeight,
-                    scrollPercent: scrollPercent,
-                    maxScrollDepth: this.config.maxScrollDepth
-                });
-            };
-
-            window.addEventListener('scroll', () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(trackScroll, 100);
             }, { passive: true });
 
             // Трекинг максимальной глубины скролла при выходе
@@ -234,28 +220,39 @@
                     maxScrollDepth: this.config.maxScrollDepth
                 });
 
-                // TODO: Здесь позже будет отправка данных на сервер))
+                // Отправляем события при выходе
                 this.sendEvents();
             });
+
+            // Периодическая отправка событий (каждые 10 секунд)
+            setInterval(() => {
+                if (this.events.length > 0) {
+                    this.sendEvents();
+                }
+            }, 10000);
         }
 
-        // Метод для отправки событий (пока просто логирование)
+        // Метод для отправки событий
         sendEvents() {
-            if (this.events.length === 0) {
-                return;
-            }
+            if (this.events.length === 0) return;
 
-            this.log('Sending events to server:', {
-                eventsCount: this.events.length,
-                events: this.events
+            const eventsToSend = [...this.events];
+            
+            // Отправляем события батчами на бэкенд
+            fetch("/analytics/events", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(eventsToSend),
+                credentials: "include"
+            }).then(() => {
+                this.log(`Sent ${eventsToSend.length} events to server`);
+            }).catch(err => {
+                console.error("Failed to send events", err);
+                // Не очищаем события при ошибке, чтобы попробовать отправить позже
             });
 
-            // TODO: Реализовать отправку на бэкенд
-            if (this.config.debug) {
-                const storedEvents = JSON.parse(localStorage.getItem('tracker_events') || '[]');
-                storedEvents.push(...this.events);
-                localStorage.setItem('tracker_events', JSON.stringify(storedEvents));
-            }
+            // Очищаем отправленные события только после успешной отправки
+            this.events = [];
         }
 
         // Публичный API для ручного трекинга кастомных событий
