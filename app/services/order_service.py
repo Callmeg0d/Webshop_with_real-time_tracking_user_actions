@@ -13,7 +13,9 @@ from app.repositories import (
 from app.exceptions import (
     NotEnoughProductsInStock,
     CannotMakeOrderWithoutItems,
-    CannotMakeOrderWithoutAddress
+    CannotMakeOrderWithoutAddress,
+    NotEnoughBalanceToMakeOrder,
+    UserIsNotPresentException
 )
 from app.messaging.publisher import publish_order_confirmation
 
@@ -61,6 +63,15 @@ class OrderService:
             for item in cart_items
         ]
 
+        # Получаем баланс пользователя
+        current_balance = await self.users_repository.get_balance_with_lock(user_id)
+        if current_balance is None:
+            raise UserIsNotPresentException
+        
+        # Проверяем, что баланс пользователя не меньше стоимости заказа
+        if current_balance < total_cost:
+            raise NotEnoughBalanceToMakeOrder
+
         # Создаём заказ
         order = await self.orders_repository.create_order(
             OrderItem(
@@ -79,6 +90,10 @@ class OrderService:
                 item["product_id"],
                 item["quantity"]
             )
+
+        #Списываем баланс
+        await self.users_repository.decrease_balance(user_id, total_cost)
+
         # Очищаем корзину
         await self.carts_repository.clear_cart(user_id)
 

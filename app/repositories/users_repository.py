@@ -93,6 +93,49 @@ class UsersRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_balance_with_lock(self, user_id: int) -> Optional[int]:
+        """
+        Получает текущий баланс пользователя с блокировкой строки (SELECT FOR UPDATE).
+
+        Args:
+            user_id: Идентификатор пользователя.
+
+        Returns:
+            Баланс пользователя или None, если пользователь не найден
+        """
+        result = await self.db.execute(
+            select(Users.balance)
+            .where(Users.id == user_id)
+            .with_for_update()
+        )
+        return result.scalar_one_or_none()
+
+    async def decrease_balance(self, user_id: int, cost: int) -> Optional[int]:
+        """
+        Списывает указанную сумму с баланса пользователя.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            cost: Сумма списания (стоимость заказа), должна быть > 0
+
+        Returns:
+            Новый баланс пользователя после списания или None, если пользователь не найден
+
+        """
+        if cost <= 0:
+            raise ValueError("Сумма списания должна быть больше нуля")
+        
+        await self.db.execute(
+            update(Users)
+            .where(Users.id == user_id)
+            .values(balance=Users.balance - cost)
+        )
+        # Получаем актуальный баланс из БД
+        result = await self.db.execute(
+            select(Users.balance).where(Users.id == user_id)
+        )
+        return result.scalar_one_or_none()
+
     async def change_delivery_address(self, user_id: int, new_address: str) -> str:
         """
         Изменяет адрес доставки пользователя.

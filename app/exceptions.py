@@ -72,3 +72,7 @@ class CannotFindProductWithThisId(ShopException):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "Товара с таким id не существует"
 
+class NotEnoughBalanceToMakeOrder(ShopException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Недостаточно баланса пользователя для оформления заказа"
+
