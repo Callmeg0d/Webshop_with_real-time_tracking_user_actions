@@ -16,10 +16,30 @@ class AuthService:
     def __init__(self,
                  user_repository: UsersRepository,
                  db: AsyncSession):
+        """
+        Сервис аутентификации для регистрации, входа и обновления токенов пользователей
+
+        Args:
+            user_repository: Репозиторий для работы с пользователями в БД
+            db: Асинхронная сессия базы данных
+        """
         self.db = db
         self.user_repository = user_repository
 
     async def register_user(self, user_data: SUserAuth) -> UserItem:
+        """
+        Регистрирует нового пользователя в системе
+
+        Args:
+            user_data: Данные для регистрации
+
+        Returns:
+            UserItem: Доменная сущность зарегистрированного пользователя
+
+        Raises:
+            UserAlreadyExistsException: Если пользователь с таким email уже существует
+        """
+
         # Проверяем существование пользователя
         existing_user = await self.user_repository.get_user_by_email(user_data.email)
         if existing_user:
@@ -43,6 +63,19 @@ class AuthService:
         return user
 
     async def login_user(self, user_data: SUserAuth) -> dict[str, str]:
+        """
+        Аутентифицирует пользователя и возвращает токены доступа
+
+        Args:
+            user_data: Данные для входа (email и пароль)
+
+        Returns:
+            Словарь с access_token и refresh_token
+
+        Raises:
+            IncorrectEmailOrPasswordException: Если неверный email или пароль
+        """
+
         # Аутентифицируем пользователя
         user = await authenticate_user(user_data.email, user_data.password, self.db)
         if not user:
@@ -58,6 +91,20 @@ class AuthService:
         }
 
     async def refresh_tokens(self, token: str) -> dict[str, str]:
+        """
+        Обновляет access token и при необходимости refresh token
+
+        Args:
+            token: Refresh token для верификации
+
+        Returns:
+            Словарь с новым access_token и refresh_token (если нужно обновить)
+
+        Raises:
+            TokenExpiredException: Если refresh token истек
+            JWTError: Если токен невалиден или пользователь не найден
+        """
+
         # Декодируем токен
         try:
             payload = jose_jwt.decode(token, settings.SECRET_KEY, settings.ALGORITHM)
