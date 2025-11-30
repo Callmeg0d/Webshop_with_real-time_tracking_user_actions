@@ -83,7 +83,7 @@ class ProductsRepository:
             product_id: Идентификатор товара.
 
         Returns:
-            `ProductItem` если найден, иначе `None`.
+            Доменная сущность товара если найден, иначе `None`.
         """
         result = await self.db.execute(
             select(Products).where(Products.product_id == product_id)
@@ -92,7 +92,9 @@ class ProductsRepository:
         return self.mapper.to_entity(orm_product) if orm_product else None
 
     async def get_all_products(self) -> List[ProductItem]:
-        """Возвращает список всех товаров в виде доменных сущностей."""
+        """
+        Возвращает список всех товаров в виде доменных сущностей.
+        """
         result = await self.db.execute(select(Products))
         orm_models = list(result.scalars().all())
         return [
