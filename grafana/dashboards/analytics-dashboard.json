@@ -1,0 +1,711 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "adHocFilters": [],
+          "adHocValuesQuery": "",
+          "add_metadata": true,
+          "contextWindowSize": "10",
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "editorMode": "builder",
+          "extrapolate": true,
+          "format": "time_series",
+          "formattedQuery": "/* grafana dashboard='Аналитика событий (ClickHouse)', user=1 */\nSELECT toStartOfHour(event_time) as time, count() as events FROM analytics.events WHERE event_time >= toDateTime64(1764434603715/1000, 3) AND event_time <= toDateTime64(1764607403715/1000, 3) GROUP BY time ORDER BY time",
+          "interval": "",
+          "intervalFactor": 1,
+          "nullifySparse": false,
+          "query": "SELECT toStartOfHour(event_time) as time, count() as events FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time ORDER BY time",
+          "rawQuery": true,
+          "rawSql": "WITH time_series AS (SELECT toStartOfHour(toDateTime64($__from/1000, 3) + INTERVAL number HOUR) as time FROM numbers(toUInt64(dateDiff('hour', toDateTime64($__from/1000, 3), toDateTime64($__to/1000, 3)) + 1)) WHERE time <= toDateTime64($__to/1000, 3)) SELECT ts.time, if(e.events IS NULL, 0, e.events) as events FROM time_series ts LEFT JOIN (SELECT toStartOfHour(event_time) as time, count() as events FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time) e ON ts.time = e.time ORDER BY ts.time",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Распределение событий по часам дня",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "adHocFilters": [],
+          "adHocValuesQuery": "",
+          "add_metadata": true,
+          "contextWindowSize": "10",
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "editorMode": "builder",
+          "extrapolate": true,
+          "format": "time_series",
+          "formattedQuery": "/* grafana dashboard='Аналитика событий (ClickHouse)', user=1 */\nSELECT toStartOfHour(event_time) as time, uniq(session_id) as active_users FROM analytics.events WHERE event_time >= toDateTime64(1764514424220/1000, 3) AND event_time <= toDateTime64(1764687224220/1000, 3) GROUP BY time ORDER BY time",
+          "interval": "",
+          "intervalFactor": 1,
+          "nullifySparse": false,
+          "query": "SELECT toStartOfHour(event_time) as time, uniq(session_id) as active_users FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time ORDER BY time",
+          "rawQuery": true,
+          "rawSql": "SELECT toStartOfHour(event_time) as time, uniq(session_id) as active_users FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time ORDER BY time",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Активные пользователи по часам",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "adHocFilters": [],
+          "adHocValuesQuery": "",
+          "add_metadata": true,
+          "contextWindowSize": "10",
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "editorMode": "builder",
+          "extrapolate": true,
+          "format": "table",
+          "formattedQuery": "/* grafana dashboard='Аналитика событий (ClickHouse)', user=1 */\nSELECT pathname, count() as views FROM analytics.events WHERE event_type = 'page_view' AND event_time >= toDateTime64(1764432304622/1000, 3) AND event_time <= toDateTime64(1764605104622/1000, 3) GROUP BY pathname ORDER BY views DESC LIMIT 10",
+          "interval": "",
+          "intervalFactor": 1,
+          "nullifySparse": false,
+          "query": "SELECT pathname, count() as views FROM analytics.events WHERE event_type = 'page_view' AND event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY pathname ORDER BY views DESC LIMIT 10",
+          "rawQuery": true,
+          "rawSql": "SELECT pathname, count() as views, uniq(session_id) as unique_sessions FROM analytics.events WHERE event_type = 'page_view' AND event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY pathname ORDER BY views DESC LIMIT 10",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Топ-10 страниц по просмотрам",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 13
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "adHocFilters": [],
+          "adHocValuesQuery": "",
+          "add_metadata": true,
+          "contextWindowSize": "10",
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "editorMode": "builder",
+          "extrapolate": true,
+          "format": "table",
+          "formattedQuery": "/* grafana dashboard='Аналитика событий (ClickHouse)', user=1 */\nSELECT count(DISTINCT session_id) as online_users FROM (SELECT session_id, max(event_time) as last_activity, maxIf(event_time, event_type = 'page_unload') as last_unload FROM analytics.events WHERE event_time >= toDateTime64(1764686855110/1000, 3) - INTERVAL 10 MINUTE GROUP BY session_id HAVING last_activity >= toDateTime64(1764686855110/1000, 3) - INTERVAL 5 MINUTE AND (last_unload IS NULL OR last_unload < last_activity))",
+          "interval": "",
+          "intervalFactor": 1,
+          "nullifySparse": false,
+          "query": "SELECT count(DISTINCT session_id) as online_users FROM (SELECT session_id, max(event_time) as last_activity, maxIf(event_time, event_type = 'page_unload') as last_unload FROM analytics.events WHERE event_time >= toDateTime64($__to/1000, 3) - INTERVAL 10 MINUTE GROUP BY session_id HAVING last_activity >= toDateTime64($__to/1000, 3) - INTERVAL 5 MINUTE AND (last_unload IS NULL OR last_unload < last_activity))",
+          "rawQuery": true,
+          "rawSql": "SELECT count(DISTINCT session_id) as online_users FROM (SELECT session_id, max(event_time) as last_activity, maxIf(event_time, event_type = 'page_unload') as last_unload FROM analytics.events WHERE event_time >= toDateTime64($__to/1000, 3) - INTERVAL 10 MINUTE GROUP BY session_id HAVING last_activity >= toDateTime64($__to/1000, 3) - INTERVAL 5 MINUTE AND (last_unload IS NULL OR last_unload < last_activity))",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Сейчас онлайн (активные за 5 мин)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 2,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "adHocFilters": [],
+          "adHocValuesQuery": "",
+          "add_metadata": true,
+          "contextWindowSize": "10",
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "editorMode": "builder",
+          "extrapolate": true,
+          "format": "table",
+          "formattedQuery": "/* grafana dashboard='Аналитика событий (ClickHouse)', user=1 */\nSELECT event_type, count() as total FROM analytics.events WHERE event_time >= toDateTime64(1764433604234/1000, 3) AND event_time <= toDateTime64(1764606404234/1000, 3) GROUP BY event_type ORDER BY total DESC",
+          "interval": "",
+          "intervalFactor": 1,
+          "nullifySparse": false,
+          "query": "SELECT event_type, count() as total FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY event_type ORDER BY total DESC",
+          "rawQuery": true,
+          "rawSql": "SELECT event_type, count() as total FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY event_type ORDER BY total DESC",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Всего событий по типам",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 20
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": ["sum"],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "format": "table",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "WITH funnel AS (SELECT uniqIf(session_id, event_type = 'page_view') as visitors, uniqIf(session_id, event_type = 'custom_add_to_cart') as added_to_cart, uniqIf(session_id, event_type = 'custom_order_complete') as orders FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3)) SELECT 'Посетители' as stage, visitors as count, 100.0 as pct_from_start, 100.0 as pct_from_prev FROM funnel UNION ALL SELECT 'Добавили в корзину', added_to_cart, if(visitors > 0, round(added_to_cart * 100.0 / visitors, 2), 0), if(visitors > 0, round(added_to_cart * 100.0 / visitors, 2), 0) FROM funnel UNION ALL SELECT 'Оформили заказ', orders, if(visitors > 0, round(orders * 100.0 / visitors, 2), 0), if(added_to_cart > 0, round(orders * 100.0 / added_to_cart, 2), 0) FROM funnel",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Воронка конверсии",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "ClickHouse"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "max": null,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 20
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT toDate(event_time) as time, uniqIf(session_id, event_type = 'page_view') as visitors FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time ORDER BY time",
+          "refId": "A",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        },
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT toDate(event_time) as time, uniqIf(session_id, event_type = 'custom_add_to_cart') as added_to_cart FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time ORDER BY time",
+          "refId": "B",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        },
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "ClickHouse"
+          },
+          "format": "time_series",
+          "group": [],
+          "metricColumn": "none",
+          "rawQuery": true,
+          "rawSql": "SELECT toDate(event_time) as time, uniqIf(session_id, event_type = 'custom_order_complete') as orders FROM analytics.events WHERE event_time >= toDateTime64($__from/1000, 3) AND event_time <= toDateTime64($__to/1000, 3) GROUP BY time ORDER BY time",
+          "refId": "C",
+          "round": "0s",
+          "skip_comments": true,
+          "useWindowFuncForMacros": true
+        }
+      ],
+      "title": "Воронка конверсии по дням",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": [
+    "analytics",
+    "clickhouse"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-2d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Аналитика событий (ClickHouse)",
+  "uid": "analytics-clickhouse",
+  "version": 57,
+  "weekStart": ""
+}
