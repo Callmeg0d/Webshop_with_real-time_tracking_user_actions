@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry install --no-dev --no-interaction
+RUN poetry install --no-interaction
 
 COPY . .
 
