@@ -10,14 +10,10 @@ from app.repositories import (
     CartsRepository,
     UsersRepository
 )
-from app.exceptions import (
-    NotEnoughProductsInStock,
-    CannotMakeOrderWithoutItems,
-    CannotMakeOrderWithoutAddress,
-    NotEnoughBalanceToMakeOrder,
-    UserIsNotPresentException
-)
-from app.messaging.publisher import publish_order_confirmation
+from app.services.order_notification_service import OrderNotificationService
+from app.services.order_validator import OrderValidator
+from app.services.payment_service import PaymentService
+
 
 class OrderService:
     def __init__(self,
@@ -25,94 +21,74 @@ class OrderService:
                  users_repository: UsersRepository,
                  products_repository: ProductsRepository,
                  carts_repository: CartsRepository,
+                 order_validator: OrderValidator,
+                 payment_service: PaymentService,
+                 notification_service: OrderNotificationService,
                  db: AsyncSession
                  ):
         self.orders_repository = orders_repository
         self.users_repository = users_repository
         self.products_repository = products_repository
         self.carts_repository = carts_repository
+        self.validator = order_validator
+        self.payment = payment_service
+        self.notification = notification_service
         self.db = db
 
 
     async def create_order(self, user_id: int) -> OrderItem:
-        # Проверяем наличие адреса
-        delivery_address = await self.users_repository.get_delivery_address(user_id)
-        if not delivery_address:
-            raise CannotMakeOrderWithoutAddress
 
-        # Получаем товары из корзины
         cart_items = await self.carts_repository.get_cart_items(user_id)
-        if not cart_items:
-            raise CannotMakeOrderWithoutItems
-
-        # Проверяем остатки на складе
-        product_ids = [item["product_id"] for item in cart_items]
-        stock_items = await self.products_repository.get_stock_by_ids(product_ids)
-
-        for item in cart_items:
-            available = stock_items.get(item["product_id"], 0)
-            if item["quantity"] > available:
-                raise NotEnoughProductsInStock
-
-        # Считаем общую стоимость
         total_cost = await self.carts_repository.get_total_cost(user_id)
 
-        # Формируем данные заказа
-        order_items = [
-            {"product_id": item["product_id"], "quantity": item["quantity"]}
-            for item in cart_items
-        ]
+        await self.validator.validate_order(user_id, cart_items, total_cost)
 
-        # Получаем баланс пользователя
-        current_balance = await self.users_repository.get_balance_with_lock(user_id)
-        if current_balance is None:
-            raise UserIsNotPresentException
-        
-        # Проверяем, что баланс пользователя не меньше стоимости заказа
-        if current_balance < total_cost:
-            raise NotEnoughBalanceToMakeOrder
+        order_data =  await self._prepare_order_data(user_id, cart_items, total_cost)
 
-        # Создаём заказ
-        order = await self.orders_repository.create_order(
-            OrderItem(
-                user_id=user_id,
-                created_at=datetime.now().replace(microsecond=0),
-                status="Arriving",
-                delivery_address=delivery_address,
-                order_items=order_items,
-                total_cost=total_cost
-            )
-        )
+        order = await self.orders_repository.create_order(order_data)
 
-        # Обновляем остатки
+        await self._decrease_stock_items(cart_items)
+        await self.payment.process_payment(user_id, total_cost)
+        await self.carts_repository.clear_cart(user_id)
+
+        await self.db.commit()
+
+        # Отправляем уведомление
+        await self.notification.send_order_confirmation(user_id, order)
+
+        return order
+
+    async def _decrease_stock_items(self, cart_items: List[dict]) -> None:
+        """
+        Уменьшает остатки товаров на складе при создании заказа.
+
+        Args:
+            cart_items: Список товаров с полями product_id и quantity
+        """
         for item in cart_items:
             await self.products_repository.decrease_stock(
                 item["product_id"],
                 item["quantity"]
             )
 
-        #Списываем баланс
-        await self.users_repository.decrease_balance(user_id, total_cost)
+    async def _prepare_order_data(self,
+                                  user_id: int,
+                                  cart_items: List[dict],
+                                  total_cost: int) -> OrderItem:
+        delivery_address = await self.users_repository.get_delivery_address(user_id)
+        order_items = [
+            {"product_id": item["product_id"], "quantity": item["quantity"]}
+            for item in cart_items
+        ]
 
-        # Очищаем корзину
-        await self.carts_repository.clear_cart(user_id)
-
-        await self.db.commit()
-
-        # Получаем email пользователя и отправляем подтверждение заказа
-        user = await self.users_repository.get_user_by_id(user_id)
-        if user and user.email:
-            order_dict = {
-                "order_id": order.order_id,
-                "created_at": order.created_at,
-                "status": order.status,
-                "delivery_address": order.delivery_address,
-                "order_items": order.order_items,
-                "total_cost": order.total_cost
-            }
-            await publish_order_confirmation(order_dict, user.email)
-
-        return order
+        return OrderItem(
+            user_id=user_id,
+            created_at=datetime.now().replace(microsecond=0),
+            status="Arriving",
+            delivery_address=delivery_address,
+            order_items=order_items,
+            total_cost=total_cost
+        )
 
     async def get_user_orders(self, user_id: int) -> List[dict]:
         orders = await self.orders_repository.get_by_user_id(user_id)
