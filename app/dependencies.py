@@ -177,10 +177,52 @@ def get_refresh_token(request: Request) -> str:
         raise TokenExpiredException
     return token
 
+def decode_token_and_get_user_id(
+        token: str,
+        raise_on_error: bool = True
+) -> tuple[dict, str] | tuple[None, None]:
+    """
+    Декодирует JWT токен и извлекает user_id из payload.
+
+    Args:
+        token: JWT токен для декодирования
+        raise_on_error: Если True, выбрасывает исключения, иначе возвращает None
+
+    Returns:
+        tuple[dict, str] | tuple[None, None]: Кортеж (payload, user_id) или (None, None) при ошибке
+
+    Raises:
+        IncorrectTokenFormatException: Если токен имеет неверный формат (только если raise_on_error=True)
+        TokenExpiredException: Если токен истёк (только если raise_on_error=True)
+        UserIsNotPresentException: Если user_id отсутствует (только если raise_on_error=True)
+    """
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, settings.ALGORITHM
+        )
+    except JWTError:
+        if raise_on_error:
+            raise IncorrectTokenFormatException
+        return None, None
+
+    expire: str | None = payload.get("exp")
+    if (not expire) or int(expire) < datetime.now(tz=timezone.utc).timestamp():
+        if raise_on_error:
+            raise TokenExpiredException
+        return None, None
+
+    user_id: str | None = payload.get("sub")
+    if not user_id:
+        if raise_on_error:
+            raise UserIsNotPresentException
+        return None, None
+
+    return payload, user_id
+
 async def get_current_user(
     token: str = Depends(get_access_token),
     db: AsyncSession = Depends(get_db)
-):
+) -> UserItem:
     """
     Получает текущего аутентифицированного пользователя из JWT токена.
 
@@ -199,19 +241,7 @@ async def get_current_user(
         TokenExpiredException: Если токен истёк
         UserIsNotPresentException: Если пользователь не найден в базе данных
     """
-    try:  # декодим токен и достаём данные из payload
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, settings.ALGORITHM
-        )
-    except JWTError:
-        raise IncorrectTokenFormatException
-    expire: str = payload.get("exp")  # достали время истечения токена
-    if (not expire) or int(expire) < datetime.now(tz=timezone.utc).timestamp():
-        raise TokenExpiredException
-
-    user_id: str = payload.get("sub")  # достали id
-    if not user_id:
-        raise UserIsNotPresentException
+    payload, user_id = decode_token_and_get_user_id(token, raise_on_error=True)
 
     user_repository = container.users_repository(db=db)
     user = await user_repository.get_user_by_id(int(user_id))
@@ -241,19 +271,8 @@ async def get_current_user_or_none(
     if not token:
         return None
 
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, settings.ALGORITHM
-        )
-    except JWTError:
-        return None
-
-    expire: str | None = payload.get("exp")
-    if (not expire) or int(expire) < datetime.now(tz=timezone.utc).timestamp():
-        return None
-
-    user_id: str | None = payload.get("sub")
-    if not user_id:
+    payload, user_id = decode_token_and_get_user_id(token, raise_on_error=False)
+    if not payload or not user_id:
         return None
 
     user_repository = container.users_repository(db=db)
