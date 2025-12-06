@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.categories import CategoryItem
 from app.repositories import CategoriesRepository
 
@@ -28,6 +29,6 @@ class CategoryService:
 
     async def create_category(self, category: CategoryItem) -> CategoryItem:
         """Создать новую категорию."""
-        created = await self.category_repository.create(category)
-        await self.db.commit()
+        async with UnitOfWork(self.db):
+            created = await self.category_repository.create(category)
         return created

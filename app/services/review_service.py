@@ -2,6 +2,7 @@ from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.reviews import ReviewItem
 from app.repositories import ReviewRepository, UsersRepository
 
@@ -30,8 +31,8 @@ class ReviewService:
             rating=rating,
             feedback=feedback,
         )
-        created_review = await self._review_repository.create_review(review)
-        await self.db.commit()
+        async with UnitOfWork(self.db):
+            created_review = await self._review_repository.create_review(review)
         
         # Получаем данные пользователя
         user = await self._users_repository.get_user_by_id(user_id)

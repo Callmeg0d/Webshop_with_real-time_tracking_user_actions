@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.security import get_password_hash, authenticate_user, create_access_token, create_refresh_token
+from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.users import UserItem
 from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException, TokenExpiredException
 from app.repositories import UsersRepository
@@ -41,21 +42,21 @@ class AuthService:
         """
 
         # Проверяем существование пользователя
-        existing_user = await self.user_repository.get_user_by_email(user_data.email)
-        if existing_user:
-            raise UserAlreadyExistsException
+        async with UnitOfWork(self.db):
+            existing_user = await self.user_repository.get_user_by_email(user_data.email)
+            if existing_user:
+                raise UserAlreadyExistsException
 
-        # Создаем пользователя с хешированным паролем
-        hashed_password = get_password_hash(user_data.password)
-        user = await self.user_repository.create_user(
-            UserItem(
-                email=user_data.email,
-                hashed_password=hashed_password,
-                balance=0,
+            # Создаем пользователя с хешированным паролем
+            hashed_password = get_password_hash(user_data.password)
+            user = await self.user_repository.create_user(
+                UserItem(
+                    email=user_data.email,
+                    hashed_password=hashed_password,
+                    balance=0,
+                )
             )
-        )
 
-        await self.db.commit()
 
         # Отправляем email с подтверждением регистрации
         await publish_registration_confirmation(user_data.email)

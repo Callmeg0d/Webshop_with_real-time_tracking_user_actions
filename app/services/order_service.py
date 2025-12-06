@@ -3,6 +3,7 @@ from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.orders import OrderItem
 from app.repositories import (
     OrdersRepository,
@@ -38,20 +39,19 @@ class OrderService:
 
     async def create_order(self, user_id: int) -> OrderItem:
 
-        cart_items = await self.carts_repository.get_cart_items(user_id)
-        total_cost = await self.carts_repository.get_total_cost(user_id)
+        async with UnitOfWork(self.db):
+            cart_items = await self.carts_repository.get_cart_items(user_id)
+            total_cost = await self.carts_repository.get_total_cost(user_id)
 
-        await self.validator.validate_order(user_id, cart_items, total_cost)
+            await self.validator.validate_order(user_id, cart_items, total_cost)
 
-        order_data =  await self._prepare_order_data(user_id, cart_items, total_cost)
+            order_data = await self._prepare_order_data(user_id, cart_items, total_cost)
 
-        order = await self.orders_repository.create_order(order_data)
+            order = await self.orders_repository.create_order(order_data)
 
-        await self._decrease_stock_items(cart_items)
-        await self.payment.process_payment(user_id, total_cost)
-        await self.carts_repository.clear_cart(user_id)
-
-        await self.db.commit()
+            await self._decrease_stock_items(cart_items)
+            await self.payment.process_payment(user_id, total_cost)
+            await self.carts_repository.clear_cart(user_id)
 
         # Отправляем уведомление
         await self.notification.send_order_confirmation(user_id, order)

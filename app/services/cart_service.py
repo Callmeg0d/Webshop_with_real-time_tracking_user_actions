@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.cart import CartItem
 from app.repositories import CartsRepository
 
@@ -75,13 +76,13 @@ class CartService:
             cost_add: Стоимость для добавления
         """
 
-        await self.cart_repository.update_cart_item(
-            user_id=user_id,
-            product_id=product_id,
-            quantity_add=quantity_add,
-            cost_add=cost_add
-        )
-        await self.db.commit()
+        async with UnitOfWork(self.db):
+            await self.cart_repository.update_cart_item(
+                user_id=user_id,
+                product_id=product_id,
+                quantity_add=quantity_add,
+                cost_add=cost_add
+            )
 
     async def add_cart_item(self,
                             user_id: int,
@@ -98,13 +99,13 @@ class CartService:
             quantity: Количество товара
             total_cost: Общая стоимость товара
         """
-        await self.cart_repository.add_cart_item(
-            user_id=user_id,
-            product_id=product_id,
-            quantity=quantity,
-            total_cost=total_cost
-        )
-        await self.db.commit()
+        async with UnitOfWork(self.db):
+            await self.cart_repository.add_cart_item(
+                user_id=user_id,
+                product_id=product_id,
+                quantity=quantity,
+                total_cost=total_cost
+            )
 
     async def remove_cart_item(self, user_id: int, product_id: int) -> None:
         """
@@ -114,11 +115,11 @@ class CartService:
             user_id: ID пользователя
             product_id: ID товара для удаления
         """
-        await self.cart_repository.remove_cart_item(
-            user_id=user_id,
-            product_id=product_id,
-        )
-        await self.db.commit()
+        async with UnitOfWork(self.db):
+            await self.cart_repository.remove_cart_item(
+                user_id=user_id,
+                product_id=product_id,
+            )
 
     async def get_cart_items_with_products(self, user_id: int) -> List[dict]:
         """
@@ -145,12 +146,12 @@ class CartService:
         Returns:
             Обновленная общая стоимость товара
         """
-        total_cost = await self.cart_repository.update_quantity(
-            user_id=user_id,
-            product_id=product_id,
-            quantity=quantity,
-        )
-        await self.db.commit()
+        async with UnitOfWork(self.db):
+            total_cost = await self.cart_repository.update_quantity(
+                user_id=user_id,
+                product_id=product_id,
+                quantity=quantity,
+            )
         return total_cost
 
     async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[CartItem]:
