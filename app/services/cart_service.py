@@ -10,17 +10,17 @@ from app.repositories import CartsRepository
 class CartService:
     def __init__(
             self,
-            cart_repository: CartsRepository,
+            carts_repository: CartsRepository,
             db: AsyncSession
     ):
         """
         Сервис для управления корзиной покупок пользователя
 
         Args:
-            cart_repository: Репозиторий для работы с корзиной в БД
+            carts_repository: Репозиторий для работы с корзиной в БД
             db: Асинхронная сессия базы данных
         """
-        self.cart_repository = cart_repository
+        self.cart_repository = carts_repository
         self.db = db
 
     async def get_user_cart(self, user_id: int) -> List[dict]:

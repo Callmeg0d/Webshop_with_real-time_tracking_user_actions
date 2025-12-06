@@ -79,6 +79,7 @@ mypy = "^1.18.2"
 faststream = {extras = ["kafka"], version = "^0.6.3"}
 aiohttp = "^3.13.2"
 aiochclient = {extras = ["aiohttp"], version = "^2.6.0"}
+dependency-injector = "^4.48.3"
 
 
 [build-system]

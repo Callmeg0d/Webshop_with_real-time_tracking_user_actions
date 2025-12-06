@@ -10,12 +10,12 @@ from app.repositories import ReviewRepository, UsersRepository
 class ReviewService:
     def __init__(
             self,
-            review_repository: ReviewRepository,
+            reviews_repository: ReviewRepository,
             users_repository: UsersRepository,
             db: AsyncSession
     ):
-        self._review_repository = review_repository
-        self._users_repository = users_repository
+        self.reviews_repository = reviews_repository
+        self.users_repository=users_repository
         self.db = db
 
     async def create_review(
@@ -32,10 +32,10 @@ class ReviewService:
             feedback=feedback,
         )
         async with UnitOfWork(self.db):
-            created_review = await self._review_repository.create_review(review)
+            created_review = await self.reviews_repository.create_review(review)
         
         # Получаем данные пользователя
-        user = await self._users_repository.get_user_by_id(user_id)
+        user = await self.users_repository.get_user_by_id(user_id)
         if not user:
             raise ValueError(f"Пользователь с ID {user_id} не найден")
 
@@ -47,5 +47,5 @@ class ReviewService:
         }
 
     async def get_reviews(self, product_id: int) -> List[dict]:
-        reviews = await self._review_repository.get_reviews_with_users(product_id)
+        reviews = await self.reviews_repository.get_reviews_with_users(product_id)
         return reviews
