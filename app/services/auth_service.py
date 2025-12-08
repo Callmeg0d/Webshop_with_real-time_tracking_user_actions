@@ -7,15 +7,15 @@ from app.config import settings
 from app.core.security import get_password_hash, authenticate_user, create_access_token, create_refresh_token
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.users import UserItem
+from app.domain.interfaces.users_repo import IUsersRepository
 from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException, TokenExpiredException
-from app.repositories import UsersRepository
 from app.schemas.users import SUserAuth
 from app.messaging.publisher import publish_registration_confirmation
 
 
 class AuthService:
     def __init__(self,
-                 user_repository: UsersRepository,
+                 user_repository: IUsersRepository,
                  db: AsyncSession):
         """
         Сервис аутентификации для регистрации, входа и обновления токенов пользователей

@@ -5,12 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.orders import OrderItem
-from app.repositories import (
-    OrdersRepository,
-    ProductsRepository,
-    CartsRepository,
-    UsersRepository
-)
+from app.domain.interfaces.orders_repo import IOrdersRepository
+from app.domain.interfaces.products_repo import IProductsRepository
+from app.domain.interfaces.carts_repo import ICartsRepository
+from app.domain.interfaces.users_repo import IUsersRepository
 from app.services.order_notification_service import OrderNotificationService
 from app.services.order_validator import OrderValidator
 from app.services.payment_service import PaymentService
@@ -18,10 +16,10 @@ from app.services.payment_service import PaymentService
 
 class OrderService:
     def __init__(self,
-                 orders_repository: OrdersRepository,
-                 users_repository: UsersRepository,
-                 products_repository: ProductsRepository,
-                 carts_repository: CartsRepository,
+                 orders_repository: IOrdersRepository,
+                 users_repository: IUsersRepository,
+                 products_repository: IProductsRepository,
+                 carts_repository: ICartsRepository,
                  order_validator: OrderValidator,
                  payment_service: PaymentService,
                  notification_service: OrderNotificationService,

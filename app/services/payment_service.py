@@ -1,7 +1,9 @@
 
+from app.domain.interfaces.users_repo import IUsersRepository
+
 
 class PaymentService:
-    def __init__(self, users_repository):
+    def __init__(self, users_repository: IUsersRepository):
         self.users_repository = users_repository
 
 

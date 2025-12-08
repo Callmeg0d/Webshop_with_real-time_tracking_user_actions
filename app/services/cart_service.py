@@ -4,13 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.cart import CartItem
-from app.repositories import CartsRepository
+from app.domain.interfaces.carts_repo import ICartsRepository
 
 
 class CartService:
     def __init__(
             self,
-            carts_repository: CartsRepository,
+            carts_repository: ICartsRepository,
             db: AsyncSession
     ):
         """

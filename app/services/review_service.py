@@ -4,14 +4,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.reviews import ReviewItem
-from app.repositories import ReviewRepository, UsersRepository
+from app.domain.interfaces.reviews_repo import IReviewsRepository
+from app.domain.interfaces.users_repo import IUsersRepository
 
 
 class ReviewService:
     def __init__(
             self,
-            reviews_repository: ReviewRepository,
-            users_repository: UsersRepository,
+            reviews_repository: IReviewsRepository,
+            users_repository: IUsersRepository,
             db: AsyncSession
     ):
         self.reviews_repository = reviews_repository

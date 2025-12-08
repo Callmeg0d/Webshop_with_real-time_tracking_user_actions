@@ -4,13 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.categories import CategoryItem
-from app.repositories import CategoriesRepository
+from app.domain.interfaces.categories_repo import ICategoriesRepository
 
 
 class CategoryService:
     def __init__(self,
                  db: AsyncSession,
-                 category_repository: CategoriesRepository
+                 category_repository: ICategoriesRepository
     ):
         self.db = db
         self.category_repository = category_repository

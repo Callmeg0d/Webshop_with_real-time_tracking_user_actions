@@ -1,9 +1,10 @@
 from app.domain.entities.orders import OrderItem
+from app.domain.interfaces.users_repo import IUsersRepository
 from app.messaging.publisher import publish_order_confirmation
 
 
 class OrderNotificationService:
-    def __init__(self, users_repository):
+    def __init__(self, users_repository: IUsersRepository):
         self.users_repository = users_repository
 
 

@@ -1,14 +1,14 @@
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.repositories import ProductsRepository
+from app.domain.interfaces.products_repo import IProductsRepository
 from app.schemas.products import SProducts
 from app.exceptions import CannotFindProductWithThisId
 
 class ProductService:
     def __init__(
             self,
-            products_repository: ProductsRepository,
+            products_repository: IProductsRepository,
             db: AsyncSession
     ):
         self.products_repository = products_repository

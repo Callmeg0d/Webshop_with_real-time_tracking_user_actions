@@ -3,6 +3,8 @@ from typing import List
 from app.exceptions import(
     CannotMakeOrderWithoutAddress, CannotMakeOrderWithoutItems, NotEnoughProductsInStock,
     UserIsNotPresentException, NotEnoughBalanceToMakeOrder)
+from app.domain.interfaces.users_repo import IUsersRepository
+from app.domain.interfaces.products_repo import IProductsRepository
 
 
 class OrderValidator:
@@ -13,7 +15,7 @@ class OrderValidator:
     достаточность остатков на складе и баланса пользователя.
     """
 
-    def __init__(self, users_repository, products_repository):
+    def __init__(self, users_repository: IUsersRepository, products_repository: IProductsRepository):
         """
         Инициализация валидатора заказов.
 

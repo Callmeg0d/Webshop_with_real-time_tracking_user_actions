@@ -4,13 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.users import UserItem
-from app.repositories import UsersRepository
+from app.domain.interfaces.users_repo import IUsersRepository
 
 
 class UserService:
     def __init__(
             self,
-            user_repository: UsersRepository,
+            user_repository: IUsersRepository,
             db: AsyncSession
     ):
         self.user_repository = user_repository
