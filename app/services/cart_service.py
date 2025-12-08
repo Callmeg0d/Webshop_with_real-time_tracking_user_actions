@@ -3,8 +3,9 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
-from app.domain.entities.cart import CartItem
+from app.domain.entities.cart import CartItem, CartOperationResult
 from app.domain.interfaces.carts_repo import ICartsRepository
+from app.domain.strategies.cart_operation_strategy import AddCartItemStrategy, UpdateCartItemStrategy
 
 
 class CartService:
@@ -22,6 +23,10 @@ class CartService:
         """
         self.cart_repository = carts_repository
         self.db = db
+        self.strategies = {
+            "add": AddCartItemStrategy(carts_repository),
+            "update": UpdateCartItemStrategy(carts_repository)
+        }
 
     async def get_user_cart(self, user_id: int) -> List[dict]:
         """
@@ -59,52 +64,28 @@ class CartService:
         total_cost = await self.cart_repository.get_total_cost(user_id=user_id)
         return total_cost
 
-    async def update_cart_item(
+    async def add_or_update_item(
             self,
             user_id: int,
             product_id: int,
-            quantity_add: int,
-            cost_add: int
-    ) -> None:
-        """
-        Обновляет количество и стоимость товара в корзине
+            quantity: int,
+            product_price: int
+    ) -> CartOperationResult:
+        # Определяем, какая стратегия нужна
+        existing_item = await self.cart_repository.get_cart_item_by_id(
+            user_id=user_id,
+            product_id=product_id
+        )
 
-        Args:
-            user_id: ID пользователя
-            product_id: ID товара
-            quantity_add: Количество для добавления
-            cost_add: Стоимость для добавления
-        """
+        strategy_key = "update" if existing_item else "add"
+        strategy = self.strategies[strategy_key]
 
         async with UnitOfWork(self.db):
-            await self.cart_repository.update_cart_item(
-                user_id=user_id,
-                product_id=product_id,
-                quantity_add=quantity_add,
-                cost_add=cost_add
-            )
-
-    async def add_cart_item(self,
-                            user_id: int,
-                            product_id: int,
-                            quantity: int,
-                            total_cost: int
-    ) -> None:
-        """
-        Добавляет новый товар в корзину
-
-        Args:
-            user_id: ID пользователя
-            product_id: ID товара
-            quantity: Количество товара
-            total_cost: Общая стоимость товара
-        """
-        async with UnitOfWork(self.db):
-            await self.cart_repository.add_cart_item(
+            return await strategy.execute(
                 user_id=user_id,
                 product_id=product_id,
                 quantity=quantity,
-                total_cost=total_cost
+                product_price=product_price
             )
 
     async def remove_cart_item(self, user_id: int, product_id: int) -> None:
