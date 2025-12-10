@@ -47,6 +47,6 @@ class ReviewService:
             "feedback": created_review.feedback
         }
 
-    async def get_reviews(self, product_id: int) -> List[dict]:
+    async def get_reviews(self, product_id: int) -> list[dict]:
         reviews = await self.reviews_repository.get_reviews_with_users(product_id)
         return reviews

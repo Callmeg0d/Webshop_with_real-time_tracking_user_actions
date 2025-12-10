@@ -1,5 +1,3 @@
-from typing import Optional
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
@@ -21,7 +19,7 @@ class UserService:
             user = await self.user_repository.create_user(user_data)
         return user
 
-    async def get_delivery_address(self, user_id: int) -> Optional[str]:
+    async def get_delivery_address(self, user_id: int) -> str | None:
         address = await self.user_repository.get_delivery_address(user_id=user_id)
         return address
 

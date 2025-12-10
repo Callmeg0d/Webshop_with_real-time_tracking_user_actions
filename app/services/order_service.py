@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -56,7 +55,7 @@ class OrderService:
 
         return order
 
-    async def _decrease_stock_items(self, cart_items: List[dict]) -> None:
+    async def _decrease_stock_items(self, cart_items: list[dict]) -> None:
         """
         Уменьшает остатки товаров на складе при создании заказа.
 
@@ -71,7 +70,7 @@ class OrderService:
 
     async def _prepare_order_data(self,
                                   user_id: int,
-                                  cart_items: List[dict],
+                                  cart_items: list[dict],
                                   total_cost: int) -> OrderItem:
         delivery_address = await self.users_repository.get_delivery_address(user_id)
         order_items = [
@@ -88,7 +87,7 @@ class OrderService:
             total_cost=total_cost
         )
 
-    async def get_user_orders(self, user_id: int) -> List[dict]:
+    async def get_user_orders(self, user_id: int) -> list[dict]:
         orders = await self.orders_repository.get_by_user_id(user_id)
         for order in orders:
             if not order.order_items:

@@ -1,5 +1,3 @@
-from typing import List
-
 from app.exceptions import(
     CannotMakeOrderWithoutAddress, CannotMakeOrderWithoutItems, NotEnoughProductsInStock,
     UserIsNotPresentException, NotEnoughBalanceToMakeOrder)
@@ -26,7 +24,7 @@ class OrderValidator:
         self.users_repository = users_repository
         self.products_repository = products_repository
 
-    async def validate_order(self, user_id: int, cart_items: List[dict], total_cost: int) -> None:
+    async def validate_order(self, user_id: int, cart_items: list[dict], total_cost: int) -> None:
         """
         Валидирует все условия для создания заказа.
 
@@ -61,7 +59,7 @@ class OrderValidator:
         if not delivery_address:
             raise CannotMakeOrderWithoutAddress
 
-    async def _validate_cart_not_empty(self, cart_items: List[dict]) -> None:
+    async def _validate_cart_not_empty(self, cart_items: list[dict]) -> None:
         """
         Проверяет, что корзина не пуста.
 
@@ -74,7 +72,7 @@ class OrderValidator:
         if not cart_items:
             raise CannotMakeOrderWithoutItems
 
-    async def _validate_stock(self, cart_items: List[dict]) -> None:
+    async def _validate_stock(self, cart_items: list[dict]) -> None:
         """
         Проверяет достаточность остатков товаров на складе.
 

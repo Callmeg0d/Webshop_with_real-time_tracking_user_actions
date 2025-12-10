@@ -1,4 +1,3 @@
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.interfaces.products_repo import IProductsRepository
@@ -14,7 +13,7 @@ class ProductService:
         self.products_repository = products_repository
         self.db = db
 
-    async def get_all_products(self) -> List[SProducts]:
+    async def get_all_products(self) -> list[SProducts]:
         products = await self.products_repository.get_all_products()
         return [SProducts.model_validate(p) for p in products]
 
