@@ -27,7 +27,7 @@ class UsersRepository:
         self.db = db
         self.mapper = UserMapper()
 
-    async def get_user_by_email(self, email: str | EmailStr) -> Optional[UserItem]:
+    async def get_user_by_email(self, email: str | EmailStr) -> UserItem | None:
         """
         Находит пользователя по email.
 
@@ -44,7 +44,7 @@ class UsersRepository:
 
         return self.mapper.to_entity(orm_data) if orm_data else None
 
-    async def get_user_by_id(self, user_id: int) -> Optional[UserItem]:
+    async def get_user_by_id(self, user_id: int) -> UserItem | None:
         """
         Находит пользователя по идентификатору.
 
@@ -78,7 +78,7 @@ class UsersRepository:
 
         return self.mapper.to_entity(orm_model)
 
-    async def get_delivery_address(self, user_id: int) -> Optional[str]:
+    async def get_delivery_address(self, user_id: int) -> str | None:
         """
         Получает адрес доставки пользователя.
 
@@ -93,7 +93,7 @@ class UsersRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_balance_with_lock(self, user_id: int) -> Optional[int]:
+    async def get_balance_with_lock(self, user_id: int) -> int | None:
         """
         Получает текущий баланс пользователя с блокировкой строки (SELECT FOR UPDATE).
 
@@ -110,7 +110,7 @@ class UsersRepository:
         )
         return result.scalar_one_or_none()
 
-    async def decrease_balance(self, user_id: int, cost: int) -> Optional[int]:
+    async def decrease_balance(self, user_id: int, cost: int) -> int | None:
         """
         Списывает указанную сумму с баланса пользователя.
 

@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +24,7 @@ class CategoriesRepository:
         self.db = db
         self.mapper = CategoryMapper()
 
-    async def get_all(self) -> List[CategoryItem]:
+    async def get_all(self) -> list[CategoryItem]:
         """
         Получает все категории.
 
@@ -42,7 +40,7 @@ class CategoriesRepository:
             if orm_model is not None
         ]
 
-    async def get_by_id(self, category_id: int) -> Optional[CategoryItem]:
+    async def get_by_id(self, category_id: int) -> CategoryItem | None:
         """
         Получает категорию по ID.
 
@@ -62,7 +60,7 @@ class CategoriesRepository:
         
         return self.mapper.to_entity(orm_model)
 
-    async def get_by_name(self, name: str) -> Optional[CategoryItem]:
+    async def get_by_name(self, name: str) -> CategoryItem | None:
         """
         Получает категорию по названию.
 

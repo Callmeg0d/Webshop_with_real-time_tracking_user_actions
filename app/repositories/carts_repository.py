@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from sqlalchemy import select, delete, func, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,7 +35,7 @@ class CartsRepository:
             delete(ShoppingCarts).where(ShoppingCarts.user_id == user_id)
         )
 
-    async def get_cart_items(self, user_id: int) -> List[dict]:
+    async def get_cart_items(self, user_id: int) -> list[dict]:
         """
         Получает товары из корзины пользователя.
 
@@ -142,7 +140,7 @@ class CartsRepository:
             )
         )
 
-    async def get_cart_items_with_products(self, user_id: int) -> List[dict]:
+    async def get_cart_items_with_products(self, user_id: int) -> list[dict]:
         """
         Получает товары из корзины с полной информацией о товарах.
 
@@ -200,7 +198,7 @@ class CartsRepository:
         row = result.fetchone()
         return row[0] if row else 0
 
-    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[CartItem]:
+    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> CartItem | None:
         """
         Получает конкретный товар из корзины пользователя.
 

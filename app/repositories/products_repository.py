@@ -26,7 +26,7 @@ class ProductsRepository:
         self.db = db
         self.mapper = ProductMapper()
 
-    async def get_stock_by_ids(self, product_ids: List[int]) -> dict:
+    async def get_stock_by_ids(self, product_ids: list[int]) -> dict:
         """
         Получает количество товаров на складе по списку ID.
 
@@ -59,7 +59,7 @@ class ProductsRepository:
             .values(product_quantity=Products.product_quantity - quantity)
         )
 
-    async def get_quantity(self, product_id: int) -> Optional[int]:
+    async def get_quantity(self, product_id: int) -> int | None:
         """
         Получает количество конкретного товара.
 
@@ -75,7 +75,7 @@ class ProductsRepository:
         )
         return result.scalar_one_or_none()
 
-    async def get_product_by_id(self, product_id: int) -> Optional[ProductItem]:
+    async def get_product_by_id(self, product_id: int) -> ProductItem | None:
         """
         Возвращает доменную сущность товара по идентификатору.
 
@@ -91,7 +91,7 @@ class ProductsRepository:
         orm_product = result.scalar_one_or_none()
         return self.mapper.to_entity(orm_product) if orm_product else None
 
-    async def get_all_products(self) -> List[ProductItem]:
+    async def get_all_products(self) -> list[ProductItem]:
         """
         Возвращает список всех товаров в виде доменных сущностей.
         """

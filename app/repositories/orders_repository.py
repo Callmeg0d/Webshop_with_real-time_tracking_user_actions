@@ -1,5 +1,3 @@
-from typing import List
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -41,7 +39,7 @@ class OrdersRepository:
 
         return self.mapper.to_entity(orm_model)
 
-    async def get_by_user_id(self, user_id: int) -> List[OrderItem]:
+    async def get_by_user_id(self, user_id: int) -> list[OrderItem]:
         """
         Получает все заказы пользователя.
 

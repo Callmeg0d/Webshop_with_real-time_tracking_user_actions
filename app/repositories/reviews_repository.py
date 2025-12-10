@@ -1,5 +1,3 @@
-from typing import Any, List
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,7 +41,7 @@ class ReviewRepository:
 
         return self.mapper.to_entity(orm_model)
 
-    async def get_reviews_with_users(self, product_id: int) -> List[dict[str, Any]]:
+    async def get_reviews_with_users(self, product_id: int) -> list[dict[str, str|int|None]]:
         """
         Получает отзывы по товару вместе с email и именем авторов.
 
@@ -61,6 +59,7 @@ class ReviewRepository:
             .where(Reviews.product_id == product_id)
         )
         # Оставим прям тут, так как просто DTO для чтения
+        # todo: Вынести DTO
         reviews = []
         for review, user_email, user_name in result.fetchall():
             reviews.append({
