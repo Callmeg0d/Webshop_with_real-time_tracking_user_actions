@@ -10,6 +10,6 @@ class ProductItem:
     description: str
     price: int
     product_quantity: int
-    image: Optional[int]
-    features: Optional[dict[str, Any]]
+    image: int | None
+    features: dict[str, str] | None
     category_id: int

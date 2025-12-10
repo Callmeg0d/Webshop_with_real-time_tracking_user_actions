@@ -9,7 +9,7 @@ class UserItem:
     """Domain entity для пользователей."""
     email: EmailStr
     hashed_password: str
-    delivery_address: Optional[str] = None
-    name: Optional[str] = None
+    delivery_address: str | None = None
+    name: str | None = None
     id: int | None = None  # None при создании, int после сохранения в БД
     balance: int = 0
