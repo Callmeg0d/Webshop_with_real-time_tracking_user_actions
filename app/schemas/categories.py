@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
@@ -6,7 +5,7 @@ class SCategoryResponse(BaseModel):
     """Схема для ответа с категорией."""
     id: int
     name: str
-    description: Optional[str]  # Опциональное поле, как в entity
+    description: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -14,4 +13,4 @@ class SCategoryResponse(BaseModel):
 class SCategoryCreate(BaseModel):
     """Схема для создания категории."""
     name: str
-    description: Optional[str] = None
+    description: str | None = None

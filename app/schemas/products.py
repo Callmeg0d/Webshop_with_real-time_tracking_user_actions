@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict
 
 
@@ -9,8 +7,8 @@ class SProducts(BaseModel):
     description: str
     price: int
     product_quantity: int
-    image: Optional[int]
-    features: Optional[dict[str, str]]
+    image: int | None
+    features: dict[str, str] | None
     category_id: int
 
     model_config = ConfigDict(from_attributes=True)
