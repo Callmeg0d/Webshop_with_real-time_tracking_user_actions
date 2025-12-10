@@ -1,4 +1,4 @@
-from typing import Protocol, List, Optional
+from typing import Protocol
 
 from app.domain.entities.cart import CartItem
 
@@ -8,7 +8,7 @@ class ICartsRepository(Protocol):
     async def clear_cart(self, user_id: int) -> None:
         ...
 
-    async def get_cart_items(self, user_id: int) -> List[dict]:
+    async def get_cart_items(self, user_id: int) -> list[dict]:
         ...
 
     async def get_total_cost(self, user_id: int) -> int:
@@ -25,11 +25,11 @@ class ICartsRepository(Protocol):
     async def remove_cart_item(self, user_id: int, product_id: int) -> None:
         ...
 
-    async def get_cart_items_with_products(self, user_id: int) -> List[dict]:
+    async def get_cart_items_with_products(self, user_id: int) -> list[dict]:
         ...
 
     async def update_quantity(self, user_id: int, product_id: int, quantity: int) -> int:
         ...
 
-    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[CartItem]:
+    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> CartItem | None:
         ...
