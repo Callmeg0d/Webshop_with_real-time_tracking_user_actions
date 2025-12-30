@@ -1,11 +1,10 @@
-from typing import List, Optional
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.cart import CartItem, CartOperationResult
 from app.domain.interfaces.carts_repo import ICartsRepository
 from app.domain.strategies.cart_operation_strategy import AddCartItemStrategy, UpdateCartItemStrategy
+from app.schemas.carts import SCartItem, SCartItemWithProduct
 
 
 class CartService:
@@ -28,7 +27,7 @@ class CartService:
             "update": UpdateCartItemStrategy(carts_repository)
         }
 
-    async def get_user_cart(self, user_id: int) -> List[dict]:
+    async def get_user_cart(self, user_id: int) -> list[SCartItem]:
         """
         Общая идея: Получает все товары в корзине пользователя
 
@@ -102,7 +101,7 @@ class CartService:
                 product_id=product_id,
             )
 
-    async def get_cart_items_with_products(self, user_id: int) -> List[dict]:
+    async def get_cart_items_with_products(self, user_id: int) -> list[SCartItemWithProduct]:
         """
         Получает товары корзины с подробной информацией о товарах
 
@@ -135,7 +134,7 @@ class CartService:
             )
         return total_cost
 
-    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> Optional[CartItem]:
+    async def get_cart_item_by_id(self, user_id: int, product_id: int) -> CartItem | None:
         """
         Находит конкретный товар в корзине пользователя по id
 

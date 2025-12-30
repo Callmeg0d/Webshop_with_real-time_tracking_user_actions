@@ -9,7 +9,7 @@ from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.users import UserItem
 from app.domain.interfaces.users_repo import IUsersRepository
 from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException, TokenExpiredException
-from app.schemas.users import SUserAuth
+from app.schemas.users import SUserAuth, STokenResponse
 from app.messaging.publisher import publish_registration_confirmation
 
 
@@ -63,7 +63,7 @@ class AuthService:
 
         return user
 
-    async def login_user(self, user_data: SUserAuth) -> dict[str, str]:
+    async def login_user(self, user_data: SUserAuth) -> STokenResponse:
         """
         Аутентифицирует пользователя и возвращает токены доступа
 
@@ -71,7 +71,7 @@ class AuthService:
             user_data: Данные для входа (email и пароль)
 
         Returns:
-            Словарь с access_token и refresh_token
+            Схема с access_token и refresh_token
 
         Raises:
             IncorrectEmailOrPasswordException: Если неверный email или пароль
@@ -86,12 +86,12 @@ class AuthService:
         access_token = create_access_token({"sub": str(user.id)})
         refresh_token = create_refresh_token({"sub": str(user.id)})
 
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        }
+        return STokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token
+        )
 
-    async def refresh_tokens(self, token: str) -> dict[str, str]:
+    async def refresh_tokens(self, token: str) -> STokenResponse:
         """
         Обновляет access token и при необходимости refresh token
 
@@ -99,7 +99,7 @@ class AuthService:
             token: Refresh token для верификации
 
         Returns:
-            Словарь с новым access_token и refresh_token (если нужно обновить)
+            Схема с новым access_token и refresh_token (если нужно обновить)
 
         Raises:
             TokenExpiredException: Если refresh token истек
@@ -145,7 +145,7 @@ class AuthService:
         else:
             new_refresh_token = token  # Оставляем старый refresh_token
 
-        return {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token
-        }
+        return STokenResponse(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token
+        )

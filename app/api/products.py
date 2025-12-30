@@ -1,4 +1,3 @@
-from typing import List
 from fastapi import APIRouter, Depends
 
 from app.dependencies import get_products_service
@@ -11,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[SProducts])
+@router.get("/", response_model=list[SProducts])
 async def get_products(
         product_service: ProductService = Depends(get_products_service)
 ):

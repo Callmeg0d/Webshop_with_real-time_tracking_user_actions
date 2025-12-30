@@ -1,6 +1,7 @@
 from typing import Protocol
 
 from app.domain.entities.cart import CartItem
+from app.schemas.carts import SCartItem, SCartItemWithProduct
 
 
 class ICartsRepository(Protocol):
@@ -8,7 +9,7 @@ class ICartsRepository(Protocol):
     async def clear_cart(self, user_id: int) -> None:
         ...
 
-    async def get_cart_items(self, user_id: int) -> list[dict]:
+    async def get_cart_items(self, user_id: int) -> list[SCartItem]:
         ...
 
     async def get_total_cost(self, user_id: int) -> int:
@@ -25,7 +26,7 @@ class ICartsRepository(Protocol):
     async def remove_cart_item(self, user_id: int, product_id: int) -> None:
         ...
 
-    async def get_cart_items_with_products(self, user_id: int) -> list[dict]:
+    async def get_cart_items_with_products(self, user_id: int) -> list[SCartItemWithProduct]:
         ...
 
     async def update_quantity(self, user_id: int, product_id: int, quantity: int) -> int:

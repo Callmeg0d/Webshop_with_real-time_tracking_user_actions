@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.entities.reviews import ReviewItem
 from app.domain.mappers.review import ReviewMapper
 from app.models import Reviews, Users
+from app.schemas.reviews import SReviewWithUser
 
 
 class ReviewRepository:
@@ -41,7 +42,7 @@ class ReviewRepository:
 
         return self.mapper.to_entity(orm_model)
 
-    async def get_reviews_with_users(self, product_id: int) -> list[dict[str, str|int|None]]:
+    async def get_reviews_with_users(self, product_id: int) -> list[SReviewWithUser]:
         """
         Получает отзывы по товару вместе с email и именем авторов.
 
@@ -58,15 +59,13 @@ class ReviewRepository:
             .join(Users, Reviews.user_id == Users.id)
             .where(Reviews.product_id == product_id)
         )
-        # Оставим прям тут, так как просто DTO для чтения
-        # todo: Вынести DTO
         reviews = []
         for review, user_email, user_name in result.fetchall():
-            reviews.append({
-                "user_email": user_email or "Анонимный пользователь",
-                "user_name": user_name,
-                "rating": review.rating,
-                "feedback": review.feedback
-            })
+            reviews.append(SReviewWithUser(
+                user_email=user_email or "Анонимный пользователь",
+                user_name=user_name,
+                rating=review.rating,
+                feedback=review.feedback
+            ))
 
         return reviews

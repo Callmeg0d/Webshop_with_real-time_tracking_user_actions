@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import ShoppingCarts, Products
 from app.domain.entities.cart import CartItem
 from app.domain.mappers.cart import CartMapper
+from app.schemas.carts import SCartItem, SCartItemWithProduct
 
 
 class CartsRepository:
@@ -35,7 +36,7 @@ class CartsRepository:
             delete(ShoppingCarts).where(ShoppingCarts.user_id == user_id)
         )
 
-    async def get_cart_items(self, user_id: int) -> list[dict]:
+    async def get_cart_items(self, user_id: int) -> list[SCartItem]:
         """
         Получает товары из корзины пользователя.
 
@@ -43,7 +44,7 @@ class CartsRepository:
             user_id: ID пользователя
 
         Returns:
-            Список словарей с информацией о товарах в корзине
+            Список товаров в корзине
         """
         result = await self.db.execute(
             select(
@@ -54,7 +55,7 @@ class CartsRepository:
             .where(ShoppingCarts.user_id == user_id)
         )
         items = result.mappings().all()
-        return [dict(item) for item in items]
+        return [SCartItem(**dict(item)) for item in items]
 
     async def get_total_cost(self, user_id: int) -> int:
         """
@@ -140,7 +141,7 @@ class CartsRepository:
             )
         )
 
-    async def get_cart_items_with_products(self, user_id: int) -> list[dict]:
+    async def get_cart_items_with_products(self, user_id: int) -> list[SCartItemWithProduct]:
         """
         Получает товары из корзины с полной информацией о товарах.
 
@@ -150,7 +151,7 @@ class CartsRepository:
             user_id: ID пользователя
 
         Returns:
-            Список словарей с полной информацией о товарах в корзине
+            Список товаров с полной информацией
         """
         result = await self.db.execute(
             select(
@@ -166,7 +167,7 @@ class CartsRepository:
             .where(ShoppingCarts.user_id == user_id)
         )
         items = result.mappings().all()
-        return [dict(item) for item in items]
+        return [SCartItemWithProduct(**dict(item)) for item in items]
 
 
     async def update_quantity(self, user_id: int, product_id: int, quantity: int) -> int:

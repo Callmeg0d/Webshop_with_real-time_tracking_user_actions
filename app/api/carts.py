@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.dependencies import get_carts_service, get_current_user, get_products_service
 from app.models import Users
-from app.schemas.carts import UpdateCartItemRequest
+from app.schemas.carts import UpdateCartItemRequest, SCartItemWithProduct
 from app.services.cart_service import CartService
 from app.services.product_service import ProductService
 
@@ -11,11 +11,11 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("/", response_model=list[SCartItemWithProduct])
 async def get_cart(
         user: Users = Depends(get_current_user),
         cart_service: CartService = Depends(get_carts_service)
-):
+) -> list[SCartItemWithProduct]:
     return await cart_service.get_cart_items_with_products(user.id)
 
 

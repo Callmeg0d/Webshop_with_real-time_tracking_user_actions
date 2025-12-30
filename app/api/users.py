@@ -4,6 +4,7 @@ from starlette.responses import JSONResponse, Response
 from app.dependencies import get_auth_service, get_refresh_token, get_current_user, get_users_service
 from app.models import Users
 from app.schemas import SUserAuth, SChangeAddress, SChangeName
+from app.schemas.users import STokenResponse
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService
 
@@ -29,18 +30,18 @@ async def register_user(
     )
 
 
-@router_auth.post("/login")
+@router_auth.post("/login", response_model=STokenResponse)
 async def login_user(
         response: Response,
         user_data: SUserAuth,
         auth_service: AuthService = Depends(get_auth_service)
-):
+) -> STokenResponse:
     tokens = await auth_service.login_user(user_data)
 
-    response.set_cookie("access_token", tokens["access_token"],
+    response.set_cookie("access_token", tokens.access_token,
                         max_age=1800, httponly=True, samesite="lax",
                         secure=False, path="/")
-    response.set_cookie("refresh_token", tokens["refresh_token"],
+    response.set_cookie("refresh_token", tokens.refresh_token,
                         max_age=604800, httponly=True, samesite="lax",
                         secure=False, path="/")
 
@@ -54,20 +55,20 @@ async def logout_user(response: Response):
     return {"message": "User logged out successfully"}
 
 
-@router_auth.post("/refresh")
+@router_auth.post("/refresh", response_model=STokenResponse)
 async def refresh_token(
         response: Response,
         token: str = Depends(get_refresh_token),
         auth_service: AuthService = Depends(get_auth_service)
-):
+) -> STokenResponse:
     tokens = await auth_service.refresh_tokens(token)
 
-    response.set_cookie("access_token", tokens["access_token"], max_age=1800, httponly=True, samesite="lax",
+    response.set_cookie("access_token", tokens.access_token, max_age=1800, httponly=True, samesite="lax",
                         path="/", secure=False)
 
     # Обновляем refresh_token только если он был обновлен
-    if tokens["refresh_token"] != token:
-        response.set_cookie("refresh_token", tokens["refresh_token"], max_age=604800, httponly=True,
+    if tokens.refresh_token != token:
+        response.set_cookie("refresh_token", tokens.refresh_token, max_age=604800, httponly=True,
                             samesite="lax", path="/", secure=False)
 
     return tokens

@@ -6,6 +6,7 @@ from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.reviews import ReviewItem
 from app.domain.interfaces.reviews_repo import IReviewsRepository
 from app.domain.interfaces.users_repo import IUsersRepository
+from app.schemas.reviews import SReviewWithUser
 
 
 class ReviewService:
@@ -25,7 +26,7 @@ class ReviewService:
             product_id: int,
             rating: int,
             feedback: str
-    ) -> dict:
+    ) -> SReviewWithUser:
         review = ReviewItem(
             user_id=user_id,
             product_id=product_id,
@@ -40,13 +41,13 @@ class ReviewService:
         if not user:
             raise ValueError(f"Пользователь с ID {user_id} не найден")
 
-        return {
-            "user_email": user.email,
-            "user_name": user.name,
-            "rating": created_review.rating,
-            "feedback": created_review.feedback
-        }
+        return SReviewWithUser(
+            user_email=user.email,
+            user_name=user.name,
+            rating=created_review.rating,
+            feedback=created_review.feedback
+        )
 
-    async def get_reviews(self, product_id: int) -> list[dict]:
+    async def get_reviews(self, product_id: int) -> list[SReviewWithUser]:
         reviews = await self.reviews_repository.get_reviews_with_users(product_id)
         return reviews

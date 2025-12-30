@@ -3,6 +3,7 @@ from app.exceptions import(
     UserIsNotPresentException, NotEnoughBalanceToMakeOrder)
 from app.domain.interfaces.users_repo import IUsersRepository
 from app.domain.interfaces.products_repo import IProductsRepository
+from app.schemas.carts import SCartItemForOrder
 
 
 class OrderValidator:
@@ -24,7 +25,7 @@ class OrderValidator:
         self.users_repository = users_repository
         self.products_repository = products_repository
 
-    async def validate_order(self, user_id: int, cart_items: list[dict], total_cost: int) -> None:
+    async def validate_order(self, user_id: int, cart_items: list[SCartItemForOrder], total_cost: int) -> None:
         """
         Валидирует все условия для создания заказа.
 
@@ -59,7 +60,7 @@ class OrderValidator:
         if not delivery_address:
             raise CannotMakeOrderWithoutAddress
 
-    async def _validate_cart_not_empty(self, cart_items: list[dict]) -> None:
+    async def _validate_cart_not_empty(self, cart_items: list[SCartItemForOrder]) -> None:
         """
         Проверяет, что корзина не пуста.
 
@@ -72,7 +73,7 @@ class OrderValidator:
         if not cart_items:
             raise CannotMakeOrderWithoutItems
 
-    async def _validate_stock(self, cart_items: list[dict]) -> None:
+    async def _validate_stock(self, cart_items: list[SCartItemForOrder]) -> None:
         """
         Проверяет достаточность остатков товаров на складе.
 
@@ -82,12 +83,12 @@ class OrderValidator:
         Raises:
             NotEnoughProductsInStock: Если недостаточно товаров на складе
         """
-        product_ids = [item["product_id"] for item in cart_items]
+        product_ids = [item.product_id for item in cart_items]
         stock_items = await self.products_repository.get_stock_by_ids(product_ids)
 
         for item in cart_items:
-            available = stock_items.get(item["product_id"], 0)
-            if item["quantity"] > available:
+            available = stock_items.get(item.product_id, 0)
+            if item.quantity > available:
                 raise NotEnoughProductsInStock
 
     async def _validate_balance(self, user_id: int, total_cost: int) -> None:

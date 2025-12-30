@@ -1,4 +1,3 @@
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.domain.entities.categories import CategoryItem
@@ -12,7 +11,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[SCategoryResponse])
+@router.get("/", response_model=list[SCategoryResponse])
 async def get_all_categories(
         category_service: CategoryService = Depends(get_categories_service)
 ):

@@ -11,6 +11,8 @@ from app.domain.interfaces.users_repo import IUsersRepository
 from app.services.order_notification_service import OrderNotificationService
 from app.services.order_validator import OrderValidator
 from app.services.payment_service import PaymentService
+from app.schemas.carts import SCartItemForOrder
+from app.schemas.orders import SUserOrder, SOrderItemWithImage
 
 
 class OrderService:
@@ -37,8 +39,14 @@ class OrderService:
     async def create_order(self, user_id: int) -> OrderItem:
 
         async with UnitOfWork(self.db):
-            cart_items = await self.carts_repository.get_cart_items(user_id)
+            cart_items_raw = await self.carts_repository.get_cart_items(user_id)
             total_cost = await self.carts_repository.get_total_cost(user_id)
+            
+            # Преобразуем SCartItem в SCartItemForOrder для валидатора
+            cart_items = [
+                SCartItemForOrder(product_id=item.product_id, quantity=item.quantity)
+                for item in cart_items_raw
+            ]
 
             await self.validator.validate_order(user_id, cart_items, total_cost)
 
@@ -55,7 +63,7 @@ class OrderService:
 
         return order
 
-    async def _decrease_stock_items(self, cart_items: list[dict]) -> None:
+    async def _decrease_stock_items(self, cart_items: list[SCartItemForOrder]) -> None:
         """
         Уменьшает остатки товаров на складе при создании заказа.
 
@@ -64,17 +72,17 @@ class OrderService:
         """
         for item in cart_items:
             await self.products_repository.decrease_stock(
-                item["product_id"],
-                item["quantity"]
+                item.product_id,
+                item.quantity
             )
 
     async def _prepare_order_data(self,
                                   user_id: int,
-                                  cart_items: list[dict],
+                                  cart_items: list[SCartItemForOrder],
                                   total_cost: int) -> OrderItem:
         delivery_address = await self.users_repository.get_delivery_address(user_id)
         order_items = [
-            {"product_id": item["product_id"], "quantity": item["quantity"]}
+            {"product_id": item.product_id, "quantity": item.quantity}
             for item in cart_items
         ]
 
@@ -87,31 +95,41 @@ class OrderService:
             total_cost=total_cost
         )
 
-    async def get_user_orders(self, user_id: int) -> list[dict]:
+    async def get_user_orders(self, user_id: int) -> list[SUserOrder]:
         orders = await self.orders_repository.get_by_user_id(user_id)
+        result = []
+        
         for order in orders:
             if not order.order_items:
                 continue
 
+            order_items_with_images = []
             for item in order.order_items:
                 product_id = item.get("product_id")
+                product_image_url = None
+                
                 if product_id:
                     product = await self.products_repository.get_product_by_id(int(product_id))
                     if product:
-                        item["product_image_url"] = (
+                        product_image_url = (
                             f"/static/images/{product.image}.webp"
                             if product.image is not None
                             else None
                         )
+                
+                order_items_with_images.append(SOrderItemWithImage(
+                    product_id=item["product_id"],
+                    quantity=item["quantity"],
+                    product_image_url=product_image_url
+                ))
 
-        return [
-            {
-                "id": order.order_id,
-                "created_at": order.created_at,
-                "status": order.status,
-                "delivery_address": order.delivery_address,
-                "order_items": order.order_items,
-                "total_cost": order.total_cost
-            }
-            for order in orders
-        ]
+            result.append(SUserOrder(
+                id=order.order_id,
+                created_at=order.created_at,
+                status=order.status,
+                delivery_address=order.delivery_address,
+                order_items=order_items_with_images,
+                total_cost=order.total_cost
+            ))
+
+        return result
