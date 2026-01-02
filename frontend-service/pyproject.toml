@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "frontend-service"
+version = "0.1.0"
+description = "Frontend service with API Gateway"
+authors = ["Egor Muratov <egor.muratov.27@mail.ru>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.115.6"
+uvicorn = "0.34.0"
+gunicorn = "23.0.0"
+pydantic = "2.10.4"
+pydantic-settings = "2.7.1"
+httpx = "0.28.1"
+jinja2 = "3.1.5"
+prometheus-fastapi-instrumentator = "7.0.2"
+sentry-sdk = "2.23.1"
+shared = {path = "../shared", develop = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+

@@ -1,0 +1,13 @@
+services:
+  frontend-service:
+    build:
+      context: .
+    image: frontend-service:latest
+    container_name: frontend_service
+    env_file:
+      - .env
+    command: gunicorn app.main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000
+    ports:
+      - "${FRONTEND_SERVICE_EXTERNAL_PORT}:${FRONTEND_SERVICE_INTERNAL_PORT}"
+
+

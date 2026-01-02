@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto mt-10" data-page="cart">
+    <h1 class="text-3xl font-bold text-center mb-6">🛒 Ваша корзина</h1>
+
+    {% if cart_items %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for item in cart_items %}
+        <div class="relative p-4 border rounded-lg shadow-md bg-white flex flex-col items-center"
+             data-cart-item
+             data-product-id="{{ item.product_id }}"
+             data-product-name="{{ item.name }}"
+             data-price="{{ item.price }}"
+             data-quantity="{{ item.quantity }}">
+            <img src="{{ url_for('static', path='images/' + item.product_id|string + '.webp') }}"
+                 alt="Фото товара"
+                 class="w-full h-40 object-contain rounded-md">
+
+            <div class="text-center mt-2">
+                <h2 class="text-xl font-semibold">{{ item.name }}</h2>
+                <p class="text-gray-600 text-sm">{{ item.description }}</p>
+                <p class="text-md text-blue-600">Остаток на складе: <strong>{{ item.product_quantity }}</strong></p>
+
+                <button onclick="updateQuantity({{ item.product_id }}, -1)" class="qty-btn">➖</button>
+                <input type="number" id="qty-{{ item.product_id }}"
+                       class="qty-input" value="{{ item.quantity }}"
+                       min="1" max="{{ item.product_quantity }}"
+                       oninput="manualUpdate({{ item.product_id }})">
+                <button onclick="updateQuantity({{ item.product_id }}, 1)" class="qty-btn">➕</button>
+
+                <p class="text-lg font-bold text-red-500">Всего: <span id="total-{{ item.product_id }}">{{ item.total_cost }}</span>
+                    ₽</p>
+            </div>
+
+            <button onclick="removeFromCart({{ item.product_id }})"
+                    class="btn__del j-basket-item-del absolute bottom-2 right-2"
+                    data-action="remove-from-cart"
+                    data-product-id="{{ item.product_id }}"
+                    data-product-name="{{ item.name }}">
+                🗑
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="text-center mt-6">
+        <div class="mb-4">
+            <p class="text-lg">
+                Ваш баланс: <span id="user-balance" class="font-bold text-blue-600">Загрузка...</span> ₽
+            </p>
+        </div>
+        <h2 class="text-2xl font-bold">Итого: <span id="cart-total">{{ total_cart_cost }}</span> ₽</h2>
+        <button onclick="checkout()" 
+                class="bg-green-500 text-white px-6 py-3 rounded-lg text-lg"
+                data-action="checkout"
+                data-total-value="{{ total_cart_cost }}"
+                data-items-count="{{ cart_items|length }}">
+            Оформить заказ
+        </button>
+    </div>
+    {% else %}
+    <p class="text-center text-lg text-gray-600">Ваша корзина ещё пуста, для оформления заказа добавьте товары</p>
+    {% endif %}
+</div>
+
+<div id="orderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+    // Затемнённый фон
+    <div id="modalBackdrop" class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+
+    <div id="modalContent" class="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all animate-modal-appear">
+        // Иконка успеха
+        <div class="flex justify-center mb-4">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Заказ успешно оформлен!</h2>
+
+        <p class="text-center text-gray-600 mb-6">
+            Ваш заказ принят в обработку. Мы отправим вам подтверждение на email.
+        </p>
+
+        <button onclick="closeOrderModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            Отлично!
+        </button>
+    </div>
+</div>
+
+<script>
+    async function updateQuantity(productId, change) {
+        let input = document.getElementById(`qty-${productId}`);
+        let newQuantity = parseInt(input.value) + change;
+
+        if (newQuantity < 1) newQuantity = 1;
+        if (newQuantity > input.max) newQuantity = input.max;
+
+        input.value = newQuantity;
+        await updateCart(productId, newQuantity);
+    }
+
+    async function manualUpdate(productId) {
+        let input = document.getElementById(`qty-${productId}`);
+        let newQuantity = parseInt(input.value);
+
+        if (isNaN(newQuantity) || newQuantity < 1) newQuantity = 1;
+        if (newQuantity > input.max) newQuantity = input.max;
+
+        input.value = newQuantity;
+        await updateCart(productId, newQuantity);
+    }
+
+    async function updateCart(productId, quantity) {
+        try {
+            const response = await (window.authFetch || fetch)(`/api/cart/cart/update/${productId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ quantity: quantity })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById(`total-${productId}`).textContent = data.total_cost;
+                document.getElementById("cart-total").textContent = data.cart_total;
+                // Обновляем индикатор корзины
+                if (typeof updateCartBadge === 'function') {
+                    await updateCartBadge();
+                }
+                // Обновляем подсветку баланса относительно новой суммы
+                await updateBalanceHighlight();
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка обновления количества товара" }));
+                alert(errorData.detail || "Ошибка обновления количества товара!");
+            }
+        } catch (error) {
+            console.error("Ошибка при обновлении корзины:", error);
+            alert("Ошибка обновления количества товара!");
+        }
+    }
+
+    async function removeFromCart(productId) {
+        try {
+            const response = await (window.authFetch || fetch)(`/api/cart/cart/remove/${productId}`, { 
+                method: 'DELETE' 
+            });
+            
+            if (response.ok) {
+                if (typeof updateCartBadge === 'function') {
+                    await updateCartBadge();
+                }
+                location.reload();
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка при удалении товара" }));
+                alert(errorData.detail || "Ошибка при удалении товара!");
+            }
+        } catch (error) {
+            console.error("Ошибка при удалении товара:", error);
+            alert("Ошибка при удалении товара!");
+        }
+    }
+
+    async function checkout() {
+        try {
+            const response = await (window.authFetch || fetch)("/api/order/orders/create", {
+                method: "POST"
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const itemsCount = document.querySelectorAll('[data-cart-item]').length;
+                showOrderModal(data.order_id, data.total_cost, itemsCount);
+                // Обновляем баланс после успешного заказа
+                if (typeof window.updateBalance === 'function') {
+                    await window.updateBalance();
+                }
+                // Обновляем баланс на странице корзины
+                await loadBalance();
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Произошла ошибка при оформлении заказа" }));
+                const errorMessage = errorData.detail || "Произошла ошибка при оформлении заказа";
+                
+                // Специальная обработка ошибки нехватки баланса
+                if (errorMessage.includes("баланс") || errorMessage.includes("баланса")) {
+                    alert(`❌ ${errorMessage}\n\nПополните баланс в профиле для оформления заказа.`);
+                } else {
+                    alert(`❌ ${errorMessage}`);
+                }
+            }
+        } catch (error) {
+            console.error("Ошибка при оформлении заказа:", error);
+            alert("Произошла ошибка при оформлении заказа");
+        }
+    }
+
+    function showOrderModal(orderId, totalCost, itemsCount) {
+        const modal = document.getElementById("orderModal");
+        modal.setAttribute('data-order-id', orderId);
+        modal.setAttribute('data-total-value', totalCost);
+        modal.setAttribute('data-items-count', itemsCount);
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeOrderModal() {
+        const modal = document.getElementById("orderModal");
+        modal.classList.add("hidden");
+        document.body.style.overflow = "";
+        location.reload();
+    }
+
+    // Функция для обновления подсветки баланса
+    async function updateBalanceHighlight() {
+        const balanceElement = document.getElementById("user-balance");
+        if (!balanceElement) return;
+        
+        const totalCost = parseInt(document.getElementById("cart-total").textContent) || 0;
+        const balance = parseInt(balanceElement.textContent) || 0;
+        
+        if (balance < totalCost) {
+            balanceElement.classList.remove("text-blue-600");
+            balanceElement.classList.add("text-red-600");
+        } else {
+            balanceElement.classList.remove("text-red-600");
+            balanceElement.classList.add("text-blue-600");
+        }
+    }
+
+    // Функция для загрузки и отображения баланса
+    async function loadBalance() {
+        try {
+            const response = await (window.authFetch || fetch)("/api/user/auth/me", {
+                method: 'GET'
+            });
+            
+            if (response.ok) {
+                const userData = await response.json();
+                const balance = userData.balance || 0;
+                const balanceElement = document.getElementById("user-balance");
+                if (balanceElement) {
+                    balanceElement.textContent = balance;
+                    await updateBalanceHighlight();
+                }
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки баланса:", error);
+        }
+    }
+
+    // Закрытие модального окна при клике на затемнённый фон
+    document.addEventListener("DOMContentLoaded", function() {
+        // Загружаем баланс при загрузке страницы
+        loadBalance();
+        
+        const modal = document.getElementById("orderModal");
+        const modalBackdrop = document.getElementById("modalBackdrop");
+        
+        if (modalBackdrop) {
+            modalBackdrop.addEventListener("click", function() {
+                closeOrderModal();
+            });
+        }
+
+        const modalContent = document.getElementById("modalContent");
+        if (modalContent) {
+            modalContent.addEventListener("click", function(e) {
+                e.stopPropagation();
+            });
+        }
+        
+        // Закрытие по Escape
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+                closeOrderModal();
+            }
+        });
+    });
+</script>
+
+<style>
+    .qty-btn {
+        background-color: #ddd;
+        border: none;
+        padding: 5px 10px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .qty-btn:hover {
+        background-color: #bbb;
+    }
+
+    .qty-input {
+        width: 50px;
+        text-align: center;
+        border: 1px solid #ddd;
+        padding: 5px;
+        margin: 0 5px;
+        font-size: 16px;
+    }
+
+    .btn__del {
+        background-color: transparent;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        transition: transform 0.2s, color 0.2s;
+    }
+
+    .btn__del:hover {
+        color: #cc0000;
+        transform: scale(1.2);
+    }
+
+    /* Анимация появления модального окна */
+    @keyframes modalAppear {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .animate-modal-appear {
+        animation: modalAppear 0.3s ease-out;
+    }
+</style>
+{% endblock %}

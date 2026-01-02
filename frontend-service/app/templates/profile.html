@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .profile-title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .profile-info, .orders-container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .profile-info h3, .orders-container h3 {
+        margin-bottom: 15px;
+    }
+
+    .profile-actions, .logout-actions {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .logout-button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+        background-color: #dc3545;
+        color: white;
+        margin-top: 10px;
+    }
+
+    .logout-button:hover {
+        background-color: #b02a37;
+    }
+
+    .orders-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .order-item {
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+    }
+
+    .order-item-details ul {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        overflow-x: auto;
+    }
+
+    .order-item-details li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: auto;
+        min-width: 100px;
+    }
+
+    .product-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+
+    .edit-address-button {
+        padding: 5px 10px;
+        font-size: 14px;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+        transition: background 0.3s;
+    }
+
+    .edit-address-button:hover {
+        background-color: #0056b3;
+    }
+
+    .address-input {
+        display: inline-block;
+        width: 100%;
+        padding: 5px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .save-address-button, .cancel-address-button {
+        padding: 5px 10px;
+        font-size: 14px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+        display: inline-block;
+    }
+
+    .save-address-button {
+        background-color: #28a745;
+    }
+
+    .save-address-button:hover {
+        background-color: #218838;
+    }
+
+    .cancel-address-button {
+        background-color: #dc3545;
+    }
+
+    .cancel-address-button:hover {
+        background-color: #b02a37;
+    }
+
+    .address-container.editing .edit-address-button {
+        display: none;
+    }
+</style>
+
+<script>
+    async function changeName() {
+        const nameField = document.getElementById("name-field");
+        const nameValue = nameField.innerText.trim();
+
+        if (!nameValue) return;
+
+        const originalName = nameValue;
+        const nameContainer = nameField.closest('.name-container');
+        nameContainer.classList.add('editing');
+
+        const inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.value = nameValue;
+        inputField.classList.add("address-input");
+
+        const saveButton = document.createElement("button");
+        saveButton.classList.add("save-address-button");
+        saveButton.innerText = "Сохранить";
+
+        const cancelButton = document.createElement("button");
+        cancelButton.classList.add("cancel-address-button");
+        cancelButton.innerText = "Отменить";
+
+        nameField.innerHTML = '';
+        nameField.appendChild(inputField);
+        nameField.appendChild(saveButton);
+        nameField.appendChild(cancelButton);
+
+        saveButton.addEventListener("click", async () => {
+            const newName = inputField.value.trim();
+            if (!newName) {
+                alert("Имя не может быть пустым.");
+                return;
+            }
+
+            try {
+                const response = await (window.authFetch || fetch)("/api/user/users/name", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ new_name: newName }),
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const errorData = await response.json().catch(() => ({ detail: "Ошибка при обновлении имени" }));
+                    alert(errorData.detail || "Ошибка при обновлении имени.");
+                }
+            } catch (error) {
+                console.error("Ошибка при изменении имени:", error);
+                alert("Ошибка при обновлении имени.");
+            }
+        });
+
+        cancelButton.addEventListener("click", () => {
+            nameField.innerHTML = originalName;
+            const editButton = document.createElement("button");
+            editButton.classList.add("edit-address-button");
+            editButton.innerText = "Изменить";
+            editButton.addEventListener("click", changeName);
+            nameField.appendChild(editButton);
+
+            nameContainer.classList.remove('editing');
+        });
+    }
+</script>
+
+<script>
+    async function changeAddress() {
+        const addressField = document.getElementById("address-field");
+        const addressValue = addressField.innerText.trim();
+
+        if (!addressValue) return;
+
+        const originalAddress = addressValue;
+
+        const addressContainer = addressField.closest('.address-container');
+        addressContainer.classList.add('editing');
+
+        const inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.value = addressValue;
+        inputField.classList.add("address-input");
+
+        const saveButton = document.createElement("button");
+        saveButton.classList.add("save-address-button");
+        saveButton.innerText = "Сохранить";
+
+        const cancelButton = document.createElement("button");
+        cancelButton.classList.add("cancel-address-button");
+        cancelButton.innerText = "Отменить";
+
+        addressField.innerHTML = '';
+        addressField.appendChild(inputField);
+        addressField.appendChild(saveButton);
+        addressField.appendChild(cancelButton);
+
+        saveButton.addEventListener("click", async () => {
+            const newAddress = inputField.value.trim();
+            if (!newAddress) {
+                alert("Адрес не может быть пустым.");
+                return;
+            }
+
+            try {
+                const response = await (window.authFetch || fetch)("/api/user/users/address", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ new_address: newAddress }),
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const errorData = await response.json().catch(() => ({ detail: "Ошибка при обновлении адреса" }));
+                    alert(errorData.detail || "Ошибка при обновлении адреса.");
+                }
+            } catch (error) {
+                console.error("Ошибка при изменении адреса:", error);
+                alert("Ошибка при обновлении адреса.");
+            }
+        });
+
+        cancelButton.addEventListener("click", () => {
+            addressField.innerHTML = originalAddress;
+            const editButton = document.createElement("button");
+            editButton.classList.add("edit-address-button");
+            editButton.innerText = "Изменить";
+            editButton.addEventListener("click", changeAddress);
+            addressField.appendChild(editButton);
+
+            addressContainer.classList.remove('editing');
+        });
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="profile-container">
+        <h1 class="profile-title">Профиль пользователя</h1>
+
+        <div class="profile-info">
+            <h3>Информация</h3>
+            <div class="name-container">
+                <p><strong>Имя:</strong>
+                    <span id="name-field">{{ user.name if user.name else "Не указано" }}</span>
+                    <button class="edit-address-button" onclick="changeName()">Изменить</button>
+                </p>
+            </div>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+
+            <div class="address-container">
+                <p><strong>Адрес доставки:</strong>
+                    <span id="address-field">{{ user.delivery_address or "Не указан" }}</span>
+                    <button class="edit-address-button" onclick="changeAddress()">Изменить</button>
+                </p>
+            </div>
+
+        </div>
+
+        <div class="orders-container">
+            <h3>Ваши заказы</h3>
+            <ul class="orders-list" id="orders-list">
+            </ul>
+        </div>
+
+        <div class="logout-actions">
+            <button id="logout-button" class="logout-button">Выйти из профиля</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("logout-button").addEventListener("click", async function() {
+        try {
+            const response = await (window.authFetch || fetch)("/api/user/auth/logout", {
+                method: "POST",
+            });
+
+            if (response.ok) {
+                document.cookie = "access_token=; Max-Age=0; path=/";
+                document.cookie = "refresh_token=; Max-Age=0; path=/";
+
+                window.location.href = "/pages/login";
+            } else {
+                alert("Ошибка при выходе.");
+            }
+        } catch (error) {
+            console.error("Ошибка при выходе:", error);
+        }
+    });
+
+    async function loadOrders() {
+        try {
+            const response = await (window.authFetch || fetch)("/api/order/orders", {
+                method: "GET",
+            });
+
+            if (response.ok) {
+                const orders = await response.json();
+                const ordersList = document.getElementById("orders-list");
+
+                if (!orders || orders.length === 0) {
+                    ordersList.innerHTML = "<li>У вас пока нет заказов.</li>";
+                    return;
+                }
+
+                orders.forEach(order => {
+                    const orderItem = document.createElement("li");
+                    orderItem.classList.add("order-item");
+
+                    orderItem.innerHTML = `
+                        <p><strong>Номер заказа:</strong> ${order.id || order.order_id}</p>
+                        <p><strong>Дата заказа:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+                        <p><strong>Статус:</strong> ${order.status}</p>
+                        <p><strong>Адрес доставки:</strong> ${order.delivery_address}</p>
+                        <p><strong>Сумма:</strong> ${order.total_cost} ₽</p>
+                        <h4>Товары в заказе:</h4>
+                        <ul>
+                            ${(order.order_items || []).map(item => {
+                                return `
+                                    <li class="order-item-details">
+                                        <div class="product-info">
+                                            <a href="/pages/product/${item.product_id}" class="product-link">
+                                                <img src="${item.product_image_url || '/static/images/default.webp'}" alt="Продукт ${item.product_id}" class="product-image"/>
+                                            </a>
+                                            <p class="product-quantity">Количество: ${item.quantity}</p>
+                                        </div>
+                                    </li>
+                                `;
+                            }).join('')}
+                        </ul>
+                    `;
+                    ordersList.appendChild(orderItem);
+                });
+            } else {
+                const errorData = await response.json().catch(() => ({ detail: "Ошибка при получении заказов" }));
+                console.error("Ошибка при получении заказов:", errorData.detail);
+            }
+        } catch (error) {
+            console.error("Ошибка при загрузке заказов:", error);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadOrders);
+</script>
+{% endblock %}
