@@ -1,0 +1,90 @@
+services:
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: "analytics-service-kafka"
+    ports:
+      - "${KAFKA_EXTERNAL_PORT}:${KAFKA_INTERNAL_PORT}"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      kafka:
+        condition: service_started
+    command: >
+      sh -c "
+      sleep 10 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic clicks_topic &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic page_views_topic &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic scrolls_topic &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic custom_events_topic &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic other_events_topic &&
+      echo 'Kafka topics created'
+      "
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: analytics-clickhouse
+    ports:
+      - "${CLICKHOUSE_EXTERNAL_PORT}:${CLICKHOUSE_INTERNAL_PORT}"
+      - "${CLICKHOUSE_INTERNAL_NATIVE_PORT}:${CLICKHOUSE_EXTERNAL_NATIVE_PORT}"
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - analytics_clickhousedata:/var/lib/clickhouse
+      - ./app/clickhouse/init:/docker-entrypoint-initdb.d
+    environment:
+      - CLICKHOUSE_DB=analytics
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:24.8
+    depends_on:
+      clickhouse:
+        condition: service_started
+    volumes:
+      - ./app/clickhouse/init:/docker-entrypoint-initdb.d
+    entrypoint: >
+      sh -c "
+      sleep 5 &&
+      clickhouse-client --host clickhouse --multiquery < /docker-entrypoint-initdb.d/001_create_events.sql &&
+      echo 'ClickHouse schema initialized'
+      "
+    restart: "no"
+
+  analytics-service:
+    build:
+      context: .
+    image: analytics-service:latest
+    container_name: analytics_service
+    env_file:
+      - .env
+    depends_on:
+      kafka:
+        condition: service_started
+      kafka-init:
+        condition: service_completed_successfully
+      clickhouse:
+        condition: service_started
+      clickhouse-init:
+        condition: service_completed_successfully
+    command: gunicorn app.main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000
+    ports:
+      - "${ANALYTICS_SERVICE_EXTERNAL_PORT}:${ANALYTICS_SERVICE_INTERNAL_PORT}"
+
+volumes:
+  analytics_clickhousedata:
+
+

@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "shared"
+version = "0.1.0"
+description = "Shared infrastructure code for microservices"
+authors = ["Egor Muratov <egor.muratov.27@mail.ru>"]
+packages = [{include = "shared"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "0.115.6"
+sqlalchemy = "2.0.36"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
