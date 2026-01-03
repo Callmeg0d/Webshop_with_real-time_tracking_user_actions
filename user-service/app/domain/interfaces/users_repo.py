@@ -27,6 +27,9 @@ class IUsersRepository(Protocol):
     async def decrease_balance(self, user_id: int, cost: int) -> int | None:
         ...
 
+    async def increase_balance(self, user_id: int, amount: int) -> None:
+        ...
+
     async def change_delivery_address(self, user_id: int, new_address: str) -> str:
         ...
 

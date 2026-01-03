@@ -36,3 +36,8 @@ class ProductService:
         async with UnitOfWork(self.db):
             await self.products_repository.decrease_stock(product_id, quantity)
 
+    async def increase_stock(self, product_id: int, quantity: int) -> None:
+        """Увеличивает остаток товара (компенсация)"""
+        async with UnitOfWork(self.db):
+            await self.products_repository.increase_stock(product_id, quantity)
+

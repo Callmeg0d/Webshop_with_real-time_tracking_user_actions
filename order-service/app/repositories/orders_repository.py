@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.domain.entities.orders import OrderItem
 from app.domain.mappers.order import OrderMapper
@@ -59,4 +59,34 @@ class OrdersRepository:
             for orm_model in orm_models
             if orm_model is not None
         ]
+
+    async def update_order_status(self, order_id: int, status: str) -> None:
+        """
+        Обновляет статус заказа.
+
+        Args:
+            order_id: ID заказа
+            status: Новый статус
+        """
+        await self.db.execute(
+            update(Orders)
+            .where(Orders.order_id == order_id)
+            .values(status=status)
+        )
+
+    async def get_order_by_id(self, order_id: int) -> OrderItem | None:
+        """
+        Получает заказ по ID.
+
+        Args:
+            order_id: ID заказа
+
+        Returns:
+            Доменная сущность заказа или None
+        """
+        result = await self.db.execute(
+            select(Orders).where(Orders.order_id == order_id)
+        )
+        orm_model = result.scalar_one_or_none()
+        return self.mapper.to_entity(orm_model) if orm_model else None
 

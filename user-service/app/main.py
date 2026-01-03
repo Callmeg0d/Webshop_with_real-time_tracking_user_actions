@@ -8,10 +8,12 @@ from app.config import settings
 from app.api.users import router_auth as router_users_auth
 from app.api.users import router_users as router_users
 from app.messaging.broker import broker
+from app.messaging.handlers import router as kafka_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    broker.include_router(kafka_router)
     await broker.start()
 
     yield

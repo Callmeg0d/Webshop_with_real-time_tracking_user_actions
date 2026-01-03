@@ -7,11 +7,18 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from app.config import settings
 from app.api.products import router as router_products
 from app.api.categories import router as router_categories
+from app.messaging.broker import broker
+from app.messaging.handlers import router as kafka_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    broker.include_router(kafka_router)
+    await broker.start()
+
     yield
+
+    await broker.stop()
 
 
 # sentry_sdk.init(

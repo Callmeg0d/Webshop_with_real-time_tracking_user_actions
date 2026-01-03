@@ -101,3 +101,64 @@ async def handle_custom_event(event: dict) -> None:
 async def handle_other_event(event: dict) -> None:
     await insert_event_to_clickhouse(event)
 
+
+@router.subscriber("order_created", group_id="analytics")
+async def handle_order_created(order: dict) -> None:
+    """
+    Обработчик события создания заказа - сохраняет в аналитику.
+    
+    Args:
+        order: Словарь с данными заказа
+    """
+    
+    ch = await get_clickhouse_client()
+    
+    event_time = datetime.now(timezone.utc)
+    event_time_naive = event_time.replace(tzinfo=None)
+    event_time_str = event_time_naive.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    
+    def escape_sql_string(s):
+        if s is None:
+            return "NULL"
+        return f"'{str(s).replace("'", "''")}'"
+    
+    # Сохраняем как событие типа "order_created" в общую таблицу events
+    sql = f"""
+        INSERT INTO analytics.events (
+            event_time,
+            event_type,
+            session_id,
+            page_view_id,
+            url,
+            pathname,
+            referrer,
+            user_agent,
+            click_x,
+            click_y,
+            click_type,
+            element_tag,
+            element_id,
+            element_class,
+            element_text,
+            payload_json
+        ) VALUES (
+            '{event_time_str}',
+            'order_created',
+            {escape_sql_string(str(order.get("user_id", "")))},
+            '',
+            '',
+            '',
+            '',
+            '',
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            {escape_sql_string(json.dumps(order, ensure_ascii=False))}
+        )
+    """
+    
+    await ch.execute(sql)

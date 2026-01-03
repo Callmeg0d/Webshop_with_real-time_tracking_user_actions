@@ -1,5 +1,4 @@
-from app.services.user_client import decrease_user_balance
-
+from app.messaging.publisher import decrease_user_balance
 
 class PaymentService:
     def __init__(self):

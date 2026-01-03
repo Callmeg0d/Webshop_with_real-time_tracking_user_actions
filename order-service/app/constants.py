@@ -1,0 +1,5 @@
+# Статусы заказа
+ORDER_STATUS_PENDING = "Pending"
+ORDER_STATUS_CONFIRMED = "Confirmed"
+ORDER_STATUS_FAILED = "Failed"
+ORDER_STATUS_ARRIVING = "Arriving"
