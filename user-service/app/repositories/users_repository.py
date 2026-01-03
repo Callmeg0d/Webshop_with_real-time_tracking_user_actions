@@ -159,6 +159,23 @@ class UsersRepository:
         )
         return result.scalar_one_or_none()
 
+    async def increase_balance(self, user_id: int, amount: int) -> None:
+        """
+        Возвращает указанную сумму на баланс пользователя (компенсация).
+
+        Args:
+            user_id: Идентификатор пользователя.
+            amount: Сумма для возврата, должна быть > 0
+        """
+        if amount <= 0:
+            raise ValueError("Сумма возврата должна быть больше нуля")
+        
+        await self.db.execute(
+            update(Users)
+            .where(Users.id == user_id)
+            .values(balance=Users.balance + amount)
+        )
+
     async def change_delivery_address(self, user_id: int, new_address: str) -> str:
         """
         Изменяет адрес доставки пользователя.

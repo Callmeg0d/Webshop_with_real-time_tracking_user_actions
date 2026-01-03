@@ -17,3 +17,6 @@ class IProductsRepository(Protocol):
     async def decrease_stock(self, product_id: int, quantity: int) -> None:
         ...
 
+    async def increase_stock(self, product_id: int, quantity: int) -> None:
+        ...
+

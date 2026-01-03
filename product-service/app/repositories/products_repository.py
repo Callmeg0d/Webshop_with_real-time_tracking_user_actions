@@ -59,6 +59,20 @@ class ProductsRepository:
             .values(product_quantity=Products.product_quantity - quantity)
         )
 
+    async def increase_stock(self, product_id: int, quantity: int) -> None:
+        """
+        Увеличивает количество конкретного товара (компенсация).
+
+        Args:
+            product_id: ID товара
+            quantity: Количество для увеличения
+        """
+        await self.db.execute(
+            update(Products)
+            .where(Products.product_id == product_id)
+            .values(product_quantity=Products.product_quantity + quantity)
+        )
+
     async def get_quantity(self, product_id: int) -> int | None:
         """
         Получает количество конкретного товара.

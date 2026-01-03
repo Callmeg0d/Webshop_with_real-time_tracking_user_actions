@@ -43,6 +43,11 @@ class UserService:
         async with UnitOfWork(self.db):
             await self.user_repository.decrease_balance(user_id, amount)
 
+    async def increase_balance(self, user_id: int, amount: int) -> None:
+        """Увеличивает баланс пользователя (компенсация)"""
+        async with UnitOfWork(self.db):
+            await self.user_repository.increase_balance(user_id, amount)
+
     async def get_users_by_ids(self, user_ids: list[int]) -> dict[int, UserItem]:
         """
         Получает пользователей по списку идентификаторов.
