@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     CLICKHOUSE_HOST: str
     CLICKHOUSE_PORT: int
 
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: Optional[str] = None
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

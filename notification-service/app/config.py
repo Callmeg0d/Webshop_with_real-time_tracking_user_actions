@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     KAFKA_HOST: str
     KAFKA_INTERNAL_PORT: int
 
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: Optional[str] = None
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

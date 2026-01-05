@@ -6,6 +6,7 @@ from shared.shared.constants import (
     ANONYMOUS_USER_NAME,
     X_USER_ID_HEADER,
 )
+from shared.shared.logging import setup_logging, get_logger
 
 __all__ = [
     "create_get_db",
@@ -15,5 +16,7 @@ __all__ = [
     "ANONYMOUS_USER_EMAIL",
     "ANONYMOUS_USER_NAME",
     "X_USER_ID_HEADER",
+    "setup_logging",
+    "get_logger",
 ]
 
