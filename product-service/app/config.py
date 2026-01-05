@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     KAFKA_HOST: str
     KAFKA_INTERNAL_PORT: int
 
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: Optional[str] = None
+
     @property
     def DATABASE_URL(self):
         return (f'postgresql+asyncpg://{self.DB_USER}:'

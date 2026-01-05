@@ -2,3 +2,7 @@
 .env-non-dev
 venv
 .idea/
+
+# Logs
+**/logs/*.log
+**/logs/*.log.*

@@ -1,5 +1,8 @@
 from typing import Protocol
 from sqlalchemy.ext.asyncio import AsyncSession
+from shared import get_logger
+
+logger = get_logger(__name__)
 
 
 class IUnitOfWork(Protocol):
@@ -55,6 +58,8 @@ class UnitOfWork:
         """
         if exc_type is None:
             await self.commit()
+            logger.debug("Transaction committed successfully")
         else:
             await self.rollback()
+            logger.warning(f"Transaction rolled back due to error: {exc_val}", exc_info=True)
 

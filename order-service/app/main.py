@@ -4,6 +4,9 @@ import sentry_sdk
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 
+
+from shared import setup_logging
+
 from app.config import settings
 from app.api.orders import router as router_orders
 from app.messaging.broker import broker
@@ -27,6 +30,8 @@ async def lifespan(app: FastAPI):
 #         "continuous_profiling_auto_start": True,
 #     },
 # )
+
+setup_logging(log_level=settings.LOG_LEVEL, log_file=settings.LOG_FILE)
 
 app = FastAPI(lifespan=lifespan)
 
