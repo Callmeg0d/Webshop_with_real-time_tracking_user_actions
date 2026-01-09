@@ -18,7 +18,6 @@ from app.exceptions import (
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService
 
-
 container = Container()
 
 
@@ -47,7 +46,8 @@ async def get_users_service(
     Returns:
         UserService: Сервис для работы с пользователями
     """
-    return container.user_service(db=db)
+    with container.db.override(db):
+        return container.user_service()
 
 
 async def get_auth_service(
@@ -61,7 +61,8 @@ async def get_auth_service(
     Returns:
         AuthService: Сервис для работы с аутентификацией и авторизацией
     """
-    return container.authentication_service(db=db)
+    with container.db.override(db):
+        return container.authentication_service()
 
 
 def get_access_token(request: Request) -> str:
@@ -169,11 +170,12 @@ async def get_current_user(
     """
     payload, user_id = decode_token_and_get_user_id(token, raise_on_error=True)
 
-    user_repository = container.users_repository(db=db)
-    user = await user_repository.get_user_by_id(int(user_id))
-    if not user:
-        raise UserIsNotPresentException
-    return user
+    with container.db.override(db):
+        user_repository = container.users_repository()
+        user = await user_repository.get_user_by_id(int(user_id))
+        if not user:
+            raise UserIsNotPresentException
+        return user
 
 
 async def get_user_id_from_header(

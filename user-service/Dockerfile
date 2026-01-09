@@ -6,11 +6,20 @@ RUN poetry config virtualenvs.create false
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock ./
+# Копируем shared модуль перед установкой зависимостей
+COPY shared /app/shared
 
+# Копируем файлы зависимостей сервиса
+COPY user-service/pyproject.toml user-service/poetry.lock ./
+
+
+RUN ln -s /app/shared /shared
+
+# Устанавливаем зависимости (shared будет установлен как локальный пакет)
 RUN poetry install --no-interaction
 
-COPY . .
+# Копируем код сервиса
+COPY user-service/ .
 
 CMD ["gunicorn", "app.main:app", "--workers", "3", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind=0.0.0.0:8000"]
 

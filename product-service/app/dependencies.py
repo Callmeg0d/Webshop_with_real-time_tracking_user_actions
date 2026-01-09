@@ -25,7 +25,8 @@ async def get_products_service(
     Returns:
         ProductService: Сервис для работы с товарами
     """
-    return container.product_service(db=db)
+    with container.db.override(db):
+        return container.product_service()
 
 
 async def get_categories_service(
@@ -39,5 +40,6 @@ async def get_categories_service(
     Returns:
         CategoryService: Сервис для работы с категориями
     """
-    return container.category_service(db=db)
+    with container.db.override(db):
+        return container.category_service()
 

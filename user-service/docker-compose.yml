@@ -59,7 +59,8 @@ services:
 
   user-service:
     build:
-      context: .
+      context: ..
+      dockerfile: user-service/Dockerfile
     image: user-service:latest
     container_name: user_service
     env_file:
@@ -80,6 +81,15 @@ services:
       "
     ports:
       - "${USER_SERVICE_EXTERNAL_PORT}:${USER_SERVICE_INTERNAL_PORT}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - default
+      - diploma_network
+
+networks:
+  diploma_network:
+    external: true
 
 volumes:
   user_postgresdata:

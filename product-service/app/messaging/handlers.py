@@ -43,39 +43,40 @@ async def handle_order_processing_started(event: dict) -> None:
     
     try:
         async with async_session_maker() as session:
-            product_service = container.product_service(db=session)
-            
-            # Резервируем товары для каждого элемента заказа
-            for item in order_items:
-                product_id = item.get("product_id")
-                quantity = item.get("quantity")
+            with container.db.override(session):
+                product_service = container.product_service()
                 
-                if not product_id or not quantity:
-                    logger.warning(f"Skipping invalid item in order {order_id}: {item}")
-                    continue
+                # Резервируем товары для каждого элемента заказа
+                for item in order_items:
+                    product_id = item.get("product_id")
+                    quantity = item.get("quantity")
+                    
+                    if not product_id or not quantity:
+                        logger.warning(f"Skipping invalid item in order {order_id}: {item}")
+                        continue
+                    
+                    logger.debug(f"Reserving product {product_id}, quantity {quantity} for order {order_id}")
+                    
+                    # Проверяем наличие товара и достаточность остатков
+                    stock = await product_service.get_stock_by_ids([product_id])
+                    available = stock.get(product_id, 0)
+                    
+                    if available < quantity:
+                        logger.warning(f"Insufficient stock for product {product_id}: available {available}, required {quantity}")
+                        await publish_stock_reservation_failed(
+                            order_id, 
+                            f"Insufficient stock for product {product_id}"
+                        )
+                        return
+                    
+                    # Уменьшаем остатки
+                    await product_service.decrease_stock(product_id, quantity)
+                    logger.debug(f"Stock decreased for product {product_id}, quantity {quantity}")
                 
-                logger.debug(f"Reserving product {product_id}, quantity {quantity} for order {order_id}")
-                
-                # Проверяем наличие товара и достаточность остатков
-                stock = await product_service.get_stock_by_ids([product_id])
-                available = stock.get(product_id, 0)
-                
-                if available < quantity:
-                    logger.warning(f"Insufficient stock for product {product_id}: available {available}, required {quantity}")
-                    await publish_stock_reservation_failed(
-                        order_id, 
-                        f"Insufficient stock for product {product_id}"
-                    )
-                    return
-                
-                # Уменьшаем остатки
-                await product_service.decrease_stock(product_id, quantity)
-                logger.debug(f"Stock decreased for product {product_id}, quantity {quantity}")
-            
-            # Все товары успешно зарезервированы
-            _processed_orders.add(order_id)
-            await publish_stock_reserved(order_id)
-            logger.info(f"Stock reservation completed successfully for order {order_id}")
+                # Все товары успешно зарезервированы
+                _processed_orders.add(order_id)
+                await publish_stock_reserved(order_id)
+                logger.info(f"Stock reservation completed successfully for order {order_id}")
             
     except Exception as e:
         logger.error(f"Error processing stock reservation for order {order_id}: {e}", exc_info=True)
@@ -109,8 +110,9 @@ async def handle_stock_increase(request: dict) -> None:
     
     try:
         async with async_session_maker() as session:
-            product_service = container.product_service(db=session)
-            await product_service.increase_stock(product_id, quantity)
+            with container.db.override(session):
+                product_service = container.product_service()
+                await product_service.increase_stock(product_id, quantity)
         logger.info(f"Stock increase (compensation) completed for order {order_id}, product {product_id}")
     except Exception as e:
         logger.error(f"Error processing stock increase for order {order_id}, product {product_id}: {e}", exc_info=True)

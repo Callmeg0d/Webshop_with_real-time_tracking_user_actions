@@ -3,7 +3,7 @@ from typing import AsyncGenerator, Callable
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from shared.shared.constants import X_USER_ID_HEADER
+from shared.constants import X_USER_ID_HEADER
 
 
 def create_get_db(

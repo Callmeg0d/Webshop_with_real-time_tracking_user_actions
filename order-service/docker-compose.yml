@@ -75,6 +75,15 @@ services:
       "
     ports:
       - "${ORDER_SERVICE_EXTERNAL_PORT}:${ORDER_SERVICE_INTERNAL_PORT}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - default
+      - diploma_network
+
+networks:
+  diploma_network:
+    external: true
 
 volumes:
   order_postgresdata:

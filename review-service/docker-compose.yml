@@ -52,6 +52,15 @@ services:
       "
     ports:
       - "${REVIEW_SERVICE_EXTERNAL_PORT}:${REVIEW_SERVICE_INTERNAL_PORT}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - default
+      - diploma_network
+
+networks:
+  diploma_network:
+    external: true
 
 volumes:
   review_postgresdata:

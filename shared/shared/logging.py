@@ -40,9 +40,22 @@ def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> No
     # Настройка уровней для сторонних библиотек
     logging.getLogger("uvicorn").setLevel(logging.INFO)
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-    logging.getLogger("faststream").setLevel(logging.INFO)
+    logging.getLogger("faststream").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    logging.getLogger("kafka").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+    logging.getLogger("kafka").setLevel(logging.CRITICAL)
+    logging.getLogger("aiokafka").setLevel(logging.CRITICAL)
+    logging.getLogger("kafka.coordinator").setLevel(logging.CRITICAL)
+    logging.getLogger("kafka.coordinator.group").setLevel(logging.CRITICAL)
+    logging.getLogger("kafka.consumer.subscription_state").setLevel(logging.CRITICAL)
+    logging.getLogger("kafka.consumer.group_coordinator").setLevel(logging.CRITICAL)
+    logging.getLogger("aiokafka.coordinator").setLevel(logging.CRITICAL)
+    logging.getLogger("aiokafka.group_coordinator").setLevel(logging.CRITICAL)
+    logging.getLogger("aiokafka.coordinator.group_coordinator").setLevel(logging.CRITICAL)
+    logging.getLogger("aiokafka.client").setLevel(logging.CRITICAL)
+    logging.getLogger("group_coordinator").setLevel(logging.CRITICAL)
+    logging.getLogger("bcrypt").setLevel(logging.ERROR)
+    logging.getLogger("passlib").setLevel(logging.ERROR)
 
 
 def get_logger(name: str) -> logging.Logger:

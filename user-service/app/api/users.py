@@ -3,17 +3,21 @@ from starlette.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.container import container
+from app.core.container import Container
 from app.dependencies import (
     get_auth_service, get_refresh_token, get_current_user, get_users_service,
     get_user_id_from_header, get_db
 )
+
+
 from app.domain.entities.users import UserItem
 from app.schemas import SUserAuth, SChangeAddress, SChangeName
 from app.schemas.users import STokenResponse, SBatchUsersRequest, SBatchUsersResponse, SUserInfo
 from app.schemas.balance import BalanceDecreaseRequest
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService
+
+container = Container()
 
 router_auth = APIRouter(
     prefix="/auth",
@@ -123,20 +127,21 @@ async def get_me_by_header(
     """Получает пользователя по заголовку X-User-Id (для других сервисов)"""
     logger.info(f"GET /users/me request for user {user_id}")
     try:
-        user_repo = container.users_repository(db=db)
-        user = await user_repo.get_user_by_id(user_id)
-        if not user:
-            logger.warning(f"User {user_id} not found")
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        logger.info(f"User {user_id} returned successfully")
-        return {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "delivery_address": user.delivery_address,
-            "balance": user.balance
-        }
+        with container.db.override(db):
+            user_repo = container.users_repository()
+            user = await user_repo.get_user_by_id(user_id)
+            if not user:
+                logger.warning(f"User {user_id} not found")
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            logger.info(f"User {user_id} returned successfully")
+            return {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "delivery_address": user.delivery_address,
+                "balance": user.balance
+            }
     except HTTPException:
         raise
     except Exception as e:

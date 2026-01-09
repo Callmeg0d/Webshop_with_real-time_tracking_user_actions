@@ -44,34 +44,35 @@ async def handle_order_processing_started(event: dict) -> None:
     
     try:
         async with async_session_maker() as session:
-            user_service = container.user_service(db=session)
-            
-            # Проверяем баланс
-            current_balance = await user_service.get_balance(user_id)
-            if current_balance is None:
-                logger.warning(f"User {user_id} not found for order {order_id}")
-                await publish_balance_reservation_failed(
-                    order_id,
-                    f"User {user_id} not found"
-                )
-                return
-            
-            if current_balance < total_cost:
-                logger.warning(f"Insufficient balance for user {user_id}: {current_balance} < {total_cost}")
-                await publish_balance_reservation_failed(
-                    order_id,
-                    f"Insufficient balance: {current_balance} < {total_cost}"
-                )
-                return
-            
-            # Резервируем баланс (списываем)
-            await user_service.decrease_balance(user_id, total_cost)
-            logger.debug(f"Balance decreased for user {user_id}, amount: {total_cost}")
-            
-            # Баланс успешно зарезервирован
-            _processed_orders.add(order_id)
-            await publish_balance_reserved(order_id)
-            logger.info(f"Balance reservation completed successfully for order {order_id}")
+            with container.db.override(session):
+                user_service = container.user_service()
+                
+                # Проверяем баланс
+                current_balance = await user_service.get_balance(user_id)
+                if current_balance is None:
+                    logger.warning(f"User {user_id} not found for order {order_id}")
+                    await publish_balance_reservation_failed(
+                        order_id,
+                        f"User {user_id} not found"
+                    )
+                    return
+                
+                if current_balance < total_cost:
+                    logger.warning(f"Insufficient balance for user {user_id}: {current_balance} < {total_cost}")
+                    await publish_balance_reservation_failed(
+                        order_id,
+                        f"Insufficient balance: {current_balance} < {total_cost}"
+                    )
+                    return
+                
+                # Резервируем баланс (списываем)
+                await user_service.decrease_balance(user_id, total_cost)
+                logger.debug(f"Balance decreased for user {user_id}, amount: {total_cost}")
+                
+                # Баланс успешно зарезервирован
+                _processed_orders.add(order_id)
+                await publish_balance_reserved(order_id)
+                logger.info(f"Balance reservation completed successfully for order {order_id}")
             
     except Exception as e:
         logger.error(f"Error processing balance reservation for order {order_id}: {e}", exc_info=True)
@@ -104,8 +105,9 @@ async def handle_balance_increase(request: dict) -> None:
     
     try:
         async with async_session_maker() as session:
-            user_service = container.user_service(db=session)
-            await user_service.increase_balance(user_id, amount)
+            with container.db.override(session):
+                user_service = container.user_service()
+                await user_service.increase_balance(user_id, amount)
         logger.info(f"Balance increase (compensation) completed for order {order_id}, user {user_id}")
     except Exception as e:
         logger.error(f"Error processing balance increase for order {order_id}, user {user_id}: {e}", exc_info=True)

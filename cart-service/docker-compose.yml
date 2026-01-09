@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_EXTERNAL_PORT}:${KAFKA_INTERNAL_PORT}"
+      - "${DB_EXTERNAL_PORT}:${DB_INTERNAL_PORT}"
     volumes:
       - cart_postgresdata:/var/lib/postgresql/data
     healthcheck:
@@ -67,6 +67,15 @@ services:
       "
     ports:
       - "${CART_SERVICE_EXTERNAL_PORT}:${CART_SERVICE_INTERNAL_PORT}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - default
+      - diploma_network
+
+networks:
+  diploma_network:
+    external: true
 
 volumes:
   cart_postgresdata:
