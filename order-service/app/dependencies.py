@@ -23,5 +23,6 @@ async def get_orders_service(
     Returns:
         OrderService: Сервис для работы с заказами
     """
-    return container.order_service(db=db)
+    with container.db.override(db):
+        return container.order_service()
 

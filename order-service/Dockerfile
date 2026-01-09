@@ -12,6 +12,8 @@ COPY shared /app/shared
 # Копируем файлы зависимостей сервиса
 COPY order-service/pyproject.toml order-service/poetry.lock ./
 
+RUN ln -s /app/shared /shared
+
 # Устанавливаем зависимости (shared будет установлен как локальный пакет)
 RUN poetry install --no-interaction
 

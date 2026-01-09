@@ -1286,6 +1286,24 @@ tornado = ["tornado (>=6)"]
 unleash = ["UnleashClient (>=6.0.1)"]
 
 [[package]]
+name = "shared"
+version = "0.1.0"
+description = "Shared infrastructure code for microservices"
+optional = false
+python-versions = "^3.12"
+groups = ["main"]
+files = []
+develop = true
+
+[package.dependencies]
+fastapi = "0.115.6"
+sqlalchemy = "2.0.36"
+
+[package.source]
+type = "directory"
+url = "../shared"
+
+[[package]]
 name = "six"
 version = "1.17.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -1463,4 +1481,4 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.6.3)
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "553da77fcf1f14da7f75917f9f0313a40772bad43742cedd8c5b9168a52a0f42"
+content-hash = "0504613255a2dcdbd344fb11637cf24d7945e91719644d8f1b15144f1388ac84"

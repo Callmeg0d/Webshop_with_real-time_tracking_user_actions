@@ -44,4 +44,12 @@ services:
     command: gunicorn app.main:app --workers 3 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000
     ports:
       - "${NOTIFICATION_SERVICE_EXTERNAL_PORT}:${NOTIFICATION_SERVICE_INTERNAL_PORT}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - diploma_network
+
+networks:
+  diploma_network:
+    external: true
 

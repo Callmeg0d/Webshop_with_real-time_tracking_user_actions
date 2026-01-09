@@ -70,6 +70,15 @@ services:
       "
     ports:
       - "${PRODUCT_SERVICE_EXTERNAL_PORT}:${PRODUCT_SERVICE_INTERNAL_PORT}"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - default
+      - diploma_network
+
+networks:
+  diploma_network:
+    external: true
 
 volumes:
   product_postgresdata:

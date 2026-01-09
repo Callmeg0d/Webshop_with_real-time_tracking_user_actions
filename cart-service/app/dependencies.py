@@ -23,5 +23,6 @@ async def get_carts_service(
     Returns:
         CartService: Сервис для работы с корзиной
     """
-    return container.cart_service(db=db)
+    with container.db.override(db):
+        return container.cart_service()
 

@@ -23,5 +23,6 @@ async def get_reviews_service(
     Returns:
         ReviewService: Сервис для работы с отзывами
     """
-    return container.review_service(db=db)
+    with container.db.override(db):
+        return container.review_service()
 

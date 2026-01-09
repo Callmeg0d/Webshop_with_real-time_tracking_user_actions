@@ -33,14 +33,15 @@ async def handle_stock_reserved(event: dict) -> None:
     try:
         # Проверяем статус заказа для идемпотентности
         async with async_session_maker() as session:
-            order_service = container.order_service(db=session)
-            order = await order_service.orders_repository.get_order_by_id(order_id)
+            with container.db.override(session):
+                order_service = container.order_service()
+                order = await order_service.orders_repository.get_order_by_id(order_id)
 
-            # Если заказ уже подтвержден или отменен, игнорируем событие
-            if not order or order.status != ORDER_STATUS_PENDING:
-                logger.debug(
-                    f"Order {order_id} already processed (status: {order.status if order else 'not found'})")
-                return
+                # Если заказ уже подтвержден или отменен, игнорируем событие
+                if not order or order.status != ORDER_STATUS_PENDING:
+                    logger.debug(
+                        f"Order {order_id} already processed (status: {order.status if order else 'not found'})")
+                    return
     
         # Отмечаем резервацию товаров
         if order_id not in _order_reservations:
@@ -74,14 +75,15 @@ async def handle_balance_reserved(event: dict) -> None:
     try:
         # Проверяем статус заказа для идемпотентности
         async with async_session_maker() as session:
-            order_service = container.order_service(db=session)
-            order = await order_service.orders_repository.get_order_by_id(order_id)
+            with container.db.override(session):
+                order_service = container.order_service()
+                order = await order_service.orders_repository.get_order_by_id(order_id)
 
-            # Если заказ уже подтвержден или отменен, игнорируем событие
-            if not order or order.status != ORDER_STATUS_PENDING:
-                logger.debug(
-                    f"Order {order_id} already processed (status: {order.status if order else 'not found'})")
-                return
+                # Если заказ уже подтвержден или отменен, игнорируем событие
+                if not order or order.status != ORDER_STATUS_PENDING:
+                    logger.debug(
+                        f"Order {order_id} already processed (status: {order.status if order else 'not found'})")
+                    return
 
         # Отмечаем резервацию баланса
         if order_id not in _order_reservations:
@@ -145,13 +147,14 @@ async def _check_and_confirm_order(order_id: int) -> None:
         logger.info(f"All reservations completed for order {order_id}, confirming order")
         try:
             async with async_session_maker() as session:
-                order_service = container.order_service(db=session)
+                with container.db.override(session):
+                    order_service = container.order_service()
 
-                # Идемпотентность: проверяем статус перед подтверждением
-                order = await order_service.orders_repository.get_order_by_id(order_id)
-                if order and order.status == ORDER_STATUS_PENDING:
-                    await order_service.confirm_order(order_id)
-                    logger.info(f"Order {order_id} confirmed successfully")
+                    # Идемпотентность: проверяем статус перед подтверждением
+                    order = await order_service.orders_repository.get_order_by_id(order_id)
+                    if order and order.status == ORDER_STATUS_PENDING:
+                        await order_service.confirm_order(order_id)
+                        logger.info(f"Order {order_id} confirmed successfully")
 
             # Очищаем состояние
             _order_reservations.pop(order_id, None)
@@ -166,13 +169,14 @@ async def _fail_order(order_id: int, reason: str) -> None:
     logger.info(f"Failing order {order_id}, reason: {reason}")
     try:
         async with async_session_maker() as session:
-            order_service = container.order_service(db=session)
+            with container.db.override(session):
+                order_service = container.order_service()
 
-            # Идемпотентность: проверяем статус перед отменой
-            order = await order_service.orders_repository.get_order_by_id(order_id)
-            if order and order.status == ORDER_STATUS_PENDING:
-                await order_service.fail_order(order_id, reason)
-                logger.info(f"Order {order_id} failed successfully")
+                # Идемпотентность: проверяем статус перед отменой
+                order = await order_service.orders_repository.get_order_by_id(order_id)
+                if order and order.status == ORDER_STATUS_PENDING:
+                    await order_service.fail_order(order_id, reason)
+                    logger.info(f"Order {order_id} failed successfully")
 
         # Очищаем состояние
         _order_reservations.pop(order_id, None)

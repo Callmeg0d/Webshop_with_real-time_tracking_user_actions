@@ -27,4 +27,3 @@ class Container(containers.DeclarativeContainer):
         user_repository=users_repository,
         db=db
     )
-

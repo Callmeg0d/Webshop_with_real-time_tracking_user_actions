@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, Depends, Body, HTTPException
 from typing import Annotated
 from shared import get_logger
 
@@ -6,6 +6,7 @@ from app.dependencies import get_products_service
 from app.schemas.products import SProducts
 from app.schemas.stock import StockUpdateRequest
 from app.services.product_service import ProductService
+from app.exceptions import CannotFindProductWithThisId
 
 router = APIRouter(
     prefix="/products",
@@ -39,6 +40,8 @@ async def get_product(
         product = await product_service.get_product_by_id(product_id)
         logger.info(f"Product {product_id} returned successfully")
         return product
+    except (CannotFindProductWithThisId, HTTPException):
+        raise
     except Exception as e:
         logger.error(f"Error fetching product {product_id} by API: {e}", exc_info=True)
         raise
