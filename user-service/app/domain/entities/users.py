@@ -1,13 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
-
-from pydantic import EmailStr
 
 
 @dataclass
 class UserItem:
     """Domain entity для пользователей."""
-    email: EmailStr
+    email: str
     hashed_password: str
     delivery_address: str | None = None
     name: str | None = None

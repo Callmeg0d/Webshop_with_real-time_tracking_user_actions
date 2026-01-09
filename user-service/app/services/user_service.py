@@ -1,9 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.users import UserItem
 from app.domain.interfaces.users_repo import IUsersRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 
 logger = get_logger(__name__)
 
@@ -12,15 +11,15 @@ class UserService:
     def __init__(
             self,
             user_repository: IUsersRepository,
-            db: AsyncSession
+            uow_factory: IUnitOfWorkFactory
     ):
         self.user_repository = user_repository
-        self.db = db
+        self.uow_factory = uow_factory
 
     async def create_user(self, user_data: UserItem) -> UserItem:
         logger.info(f"Creating user with email: {user_data.email}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 user = await self.user_repository.create_user(user_data)
             logger.info(f"User created successfully, user_id: {user.id}")
             return user
@@ -41,7 +40,7 @@ class UserService:
     async def change_delivery_address(self, user_id: int, new_address: str) -> None:
         logger.info(f"Changing delivery address for user {user_id}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.user_repository.change_delivery_address(
                     user_id=user_id,
                     new_address=new_address
@@ -54,7 +53,7 @@ class UserService:
     async def change_user_name(self, user_id: int, new_name: str) -> None:
         logger.info(f"Changing name for user {user_id}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.user_repository.change_user_name(user_id, new_name)
             logger.info(f"Name updated successfully for user {user_id}")
         except Exception as e:
@@ -76,7 +75,7 @@ class UserService:
         """Уменьшает баланс пользователя"""
         logger.info(f"Decreasing balance for user {user_id} by {amount}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.user_repository.decrease_balance(user_id, amount)
             logger.info(f"Balance decreased successfully for user {user_id}")
         except Exception as e:
@@ -87,7 +86,7 @@ class UserService:
         """Увеличивает баланс пользователя (компенсация)"""
         logger.info(f"Increasing balance for user {user_id} by {amount} (compensation)")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.user_repository.increase_balance(user_id, amount)
             logger.info(f"Balance increased successfully for user {user_id}")
         except Exception as e:

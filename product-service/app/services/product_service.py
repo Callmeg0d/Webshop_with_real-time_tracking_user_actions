@@ -1,8 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.unit_of_work import UnitOfWork
 from app.domain.interfaces.products_repo import IProductsRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 from app.schemas.products import SProducts
 from app.exceptions import CannotFindProductWithThisId
 
@@ -13,10 +12,10 @@ class ProductService:
     def __init__(
             self,
             products_repository: IProductsRepository,
-            db: AsyncSession
+            uow_factory: IUnitOfWorkFactory
     ):
         self.products_repository = products_repository
-        self.db = db
+        self.uow_factory = uow_factory
 
     async def get_all_products(self) -> list[SProducts]:
         logger.debug("Fetching all products")
@@ -60,7 +59,7 @@ class ProductService:
         """Уменьшает остаток товара"""
         logger.info(f"Decreasing stock for product {product_id} by {quantity}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.products_repository.decrease_stock(product_id, quantity)
             logger.info(f"Stock decreased successfully for product {product_id}")
         except Exception as e:
@@ -71,7 +70,7 @@ class ProductService:
         """Увеличивает остаток товара (компенсация)"""
         logger.info(f"Increasing stock for product {product_id} by {quantity} (compensation)")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.products_repository.increase_stock(product_id, quantity)
             logger.info(f"Stock increased successfully for product {product_id}")
         except Exception as e:

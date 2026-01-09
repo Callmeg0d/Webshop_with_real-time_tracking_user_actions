@@ -1,9 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.reviews import ReviewItem
 from app.domain.interfaces.reviews_repo import IReviewsRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 from app.schemas.reviews import SReviewWithUser
 from app.services.user_client import get_user_info, get_users_batch
 from shared.constants import ANONYMOUS_USER_EMAIL, ANONYMOUS_USER_NAME
@@ -15,10 +14,10 @@ class ReviewService:
     def __init__(
             self,
             reviews_repository: IReviewsRepository,
-            db: AsyncSession
+            uow_factory: IUnitOfWorkFactory
     ):
         self.reviews_repository = reviews_repository
-        self.db = db
+        self.uow_factory = uow_factory
 
     async def create_review(
             self,
@@ -47,7 +46,7 @@ class ReviewService:
                 rating=rating,
                 feedback=feedback,
             )
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 created_review = await self.reviews_repository.create_review(review)
             
             logger.debug(f"Review created successfully, review_id: {created_review.review_id if hasattr(created_review, 'review_id') else 'N/A'}")

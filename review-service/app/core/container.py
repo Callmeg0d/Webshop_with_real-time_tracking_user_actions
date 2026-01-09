@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.unit_of_work_factory import UnitOfWorkFactory
 from app.repositories.reviews_repository import ReviewsRepository
 from app.services.review_service import ReviewService
 
@@ -15,9 +16,14 @@ class Container(containers.DeclarativeContainer):
         db=db
     )
 
+    uow_factory = providers.Factory(
+        UnitOfWorkFactory,
+        session=db
+    )
+
     review_service = providers.Factory(
         ReviewService,
         reviews_repository=reviews_repository,
-        db=db
+        uow_factory=uow_factory
     )
 

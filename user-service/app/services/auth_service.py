@@ -6,9 +6,9 @@ from shared import get_logger
 
 from app.config import settings
 from app.core.security import get_password_hash, authenticate_user, create_access_token, create_refresh_token
-from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.users import UserItem
 from app.domain.interfaces.users_repo import IUsersRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 from app.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException, TokenExpiredException
 from app.schemas.users import SUserAuth, STokenResponse
 from app.messaging.publisher import publish_registration_confirmation
@@ -19,16 +19,19 @@ logger = get_logger(__name__)
 class AuthService:
     def __init__(self,
                  user_repository: IUsersRepository,
+                 uow_factory: IUnitOfWorkFactory,
                  db: AsyncSession):
         """
         Сервис аутентификации для регистрации, входа и обновления токенов пользователей
 
         Args:
             user_repository: Репозиторий для работы с пользователями в БД
-            db: Асинхронная сессия базы данных
+            uow_factory: Фабрика для создания UnitOfWork
+            db: Асинхронная сессия базы данных (для authenticate_user)
         """
         self.db = db
         self.user_repository = user_repository
+        self.uow_factory = uow_factory
 
     async def register_user(self, user_data: SUserAuth) -> UserItem:
         """
@@ -46,7 +49,7 @@ class AuthService:
         logger.info(f"Registering new user with email: {user_data.email}")
         try:
             # Проверяем существование пользователя
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 existing_user = await self.user_repository.get_user_by_email(user_data.email)
                 if existing_user:
                     logger.warning(f"User with email {user_data.email} already exists")
