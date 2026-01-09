@@ -1,9 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.cart import CartItem
 from app.domain.interfaces.carts_repo import ICartsRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 from app.schemas.carts import SCartItem, SCartItemWithProduct
 from app.services.product_client import get_product
 from app.exceptions import CannotHaveLessThan1Product, NeedToHaveAProductToIncreaseItsQuantity
@@ -15,17 +14,17 @@ class CartService:
     def __init__(
             self,
             carts_repository: ICartsRepository,
-            db: AsyncSession
+            uow_factory: IUnitOfWorkFactory
     ):
         """
         Сервис для управления корзиной покупок пользователя
 
         Args:
             carts_repository: Репозиторий для работы с корзиной в БД
-            db: Асинхронная сессия базы данных
+            uow_factory: Фабрика для создания UnitOfWork
         """
         self.cart_repository = carts_repository
-        self.db = db
+        self.uow_factory = uow_factory
 
     async def get_user_cart(self, user_id: int) -> list[SCartItem]:
         """
@@ -55,7 +54,7 @@ class CartService:
         """
         logger.info(f"Clearing cart for user {user_id}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.cart_repository.clear_cart(user_id=user_id)
             logger.info(f"Cart cleared successfully for user {user_id}")
         except Exception as e:
@@ -108,7 +107,7 @@ class CartService:
                 product_id=product_id
             )
 
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 if existing_item:
                     # Обновляем количество
                     logger.debug(f"Updating existing cart item for product {product_id}")
@@ -142,7 +141,7 @@ class CartService:
         """
         logger.info(f"Removing product {product_id} from cart for user {user_id}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.cart_repository.remove_cart_item(
                     user_id=user_id,
                     product_id=product_id,
@@ -224,7 +223,7 @@ class CartService:
             product_price = product["price"]
             logger.debug(f"Product {product_id} price: {product_price}")
 
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 total_cost = await self.cart_repository.update_quantity(
                     user_id=user_id,
                     product_id=product_id,

@@ -1,9 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.categories import CategoryItem
 from app.domain.interfaces.categories_repo import ICategoriesRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 
 logger = get_logger(__name__)
 
@@ -11,11 +10,11 @@ logger = get_logger(__name__)
 class CategoryService:
     def __init__(
         self,
-        db: AsyncSession,
-        category_repository: ICategoriesRepository
+        category_repository: ICategoriesRepository,
+        uow_factory: IUnitOfWorkFactory
     ):
-        self.db = db
         self.category_repository = category_repository
+        self.uow_factory = uow_factory
 
     async def get_all_categories(self) -> list[CategoryItem]:
         """Получить все категории."""
@@ -60,7 +59,7 @@ class CategoryService:
         """Создать новую категорию."""
         logger.info(f"Creating category: {category.name}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 created = await self.category_repository.create(category)
             logger.info(f"Category created successfully: {created.name}")
             return created

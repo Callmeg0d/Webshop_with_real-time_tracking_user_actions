@@ -1,24 +1,9 @@
-from typing import Protocol
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
+from app.domain.interfaces.unit_of_work import IUnitOfWork
+
 logger = get_logger(__name__)
-
-
-class IUnitOfWork(Protocol):
-    """Интерфейс для Unit of Work"""
-
-    async def commit(self) -> None:
-        ...
-
-    async def rollback(self) -> None:
-        ...
-
-    async def __aenter__(self) -> "IUnitOfWork":
-        ...
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        ...
 
 
 class UnitOfWork:
@@ -46,7 +31,7 @@ class UnitOfWork:
         """Откатывает все изменения в транзакции"""
         await self.session.rollback()
 
-    async def __aenter__(self) -> "UnitOfWork":
+    async def __aenter__(self) -> IUnitOfWork:
         """Вход в контекстный менеджер"""
         return self
 

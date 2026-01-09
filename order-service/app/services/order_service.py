@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from shared import get_logger
 
-from app.core.unit_of_work import UnitOfWork
 from app.domain.entities.orders import OrderItem
 from app.domain.interfaces.orders_repo import IOrdersRepository
+from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 from app.schemas.orders import SCartItemForOrder, SUserOrder, SOrderItemWithImage
 from app.services.cart_client import get_cart_items, get_cart_total
 from app.services.product_client import get_product
@@ -30,18 +29,18 @@ class OrderService:
         order_validator: OrderValidator,
         payment_service: PaymentService,
         notification_service: OrderNotificationService,
-        db: AsyncSession
+        uow_factory: IUnitOfWorkFactory
     ):
         self.orders_repository = orders_repository
         self.validator = order_validator
         self.payment = payment_service
         self.notification = notification_service
-        self.db = db
+        self.uow_factory = uow_factory
 
     async def create_order(self, user_id: int) -> OrderItem:
         logger.info(f"Creating order for user {user_id}")
         try:
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 # Получаем корзину из cart-service
                 cart_items_raw = await get_cart_items(user_id)
                 total_cost = await get_cart_total(user_id)
@@ -90,7 +89,7 @@ class OrderService:
                 logger.debug(f"Order {order_id} cannot be confirmed (status: {order.status if order else 'not found'})")
                 return
             
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.orders_repository.update_order_status(order_id, ORDER_STATUS_CONFIRMED)
             
             # Получаем заказ для публикации события
@@ -131,7 +130,7 @@ class OrderService:
                 logger.debug(f"Order {order_id} cannot be failed (status: {order.status if order else 'not found'})")
                 return
             
-            async with UnitOfWork(self.db):
+            async with self.uow_factory.create():
                 await self.orders_repository.update_order_status(order_id, ORDER_STATUS_FAILED)
             
             # Компенсирующие действия - возврат ресурсов

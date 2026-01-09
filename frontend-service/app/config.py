@@ -4,8 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    MODE: Literal["DEV", "TEST", "PROD"]
-    SENTRY_URL: Optional[str] = None
+    #SENTRY_URL: Optional[str] = None
 
     # URLs микросервисов
     USER_SERVICE_URL: str
@@ -22,7 +21,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FILE: Optional[str] = None
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings() # type: ignore[call-arg]
