@@ -28,14 +28,14 @@ async def get_cart(
         raise
 
 
-@router.post("/add/{product_id}")
+@router.post("/{product_id}")
 async def add_to_cart(
         product_id: int,
         quantity: int = 1,
         user_id: int = Depends(get_user_id),
         cart_service: CartService = Depends(get_carts_service)
 ):
-    logger.info(f"POST /cart/add/{product_id} request from user {user_id}, quantity: {quantity}")
+    logger.info(f"POST /cart/{product_id} request from user {user_id}, quantity: {quantity}")
     try:
         await cart_service.add_to_cart(user_id, product_id, quantity)
         logger.info(f"Product {product_id} added to cart by API for user {user_id}")
@@ -45,13 +45,13 @@ async def add_to_cart(
         raise
 
 
-@router.delete("/remove/{product_id}")
+@router.delete("/{product_id}")
 async def remove_from_cart(
         product_id: int,
         user_id: int = Depends(get_user_id),
         cart_service: CartService = Depends(get_carts_service)
 ):
-    logger.info(f"DELETE /cart/remove/{product_id} request from user {user_id}")
+    logger.info(f"DELETE /cart/{product_id} request from user {user_id}")
     try:
         await cart_service.remove_cart_item(user_id, product_id)
         logger.info(f"Product {product_id} removed from cart by API for user {user_id}")
@@ -61,14 +61,14 @@ async def remove_from_cart(
         raise
 
 
-@router.put("/update/{product_id}")
+@router.put("/{product_id}")
 async def update_cart_item(
         product_id: int,
         request: UpdateCartItemRequest,
         user_id: int = Depends(get_user_id),
         cart_service: CartService = Depends(get_carts_service)
 ):
-    logger.info(f"PUT /cart/update/{product_id} request from user {user_id}, quantity: {request.quantity}")
+    logger.info(f"PUT /cart/{product_id} request from user {user_id}, quantity: {request.quantity}")
     try:
         total_cost = await cart_service.update_quantity(user_id, product_id, request.quantity)
         cart_total = await cart_service.get_total_cost(user_id)

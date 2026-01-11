@@ -334,7 +334,7 @@
                 document.cookie = "access_token=; Max-Age=0; path=/";
                 document.cookie = "refresh_token=; Max-Age=0; path=/";
 
-                window.location.href = "/pages/login";
+                window.location.href = "/login";
             } else {
                 alert("Ошибка при выходе.");
             }
@@ -374,7 +374,7 @@
                                 return `
                                     <li class="order-item-details">
                                         <div class="product-info">
-                                            <a href="/pages/product/${item.product_id}" class="product-link">
+                                            <a href="/product/${item.product_id}" class="product-link">
                                                 <img src="${item.product_image_url || '/static/images/default.webp'}" alt="Продукт ${item.product_id}" class="product-image"/>
                                             </a>
                                             <p class="product-quantity">Количество: ${item.quantity}</p>

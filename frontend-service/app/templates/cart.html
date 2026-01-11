@@ -13,7 +13,7 @@
              data-product-name="{{ item.name }}"
              data-price="{{ item.price }}"
              data-quantity="{{ item.quantity }}">
-            <img src="{{ url_for('static', path='images/' + item.product_id|string + '.webp') }}"
+            <img src="/static/images/{{ item.product_id }}.webp"
                  alt="Фото товара"
                  class="w-full h-40 object-contain rounded-md">
 
@@ -115,7 +115,7 @@
 
     async function updateCart(productId, quantity) {
         try {
-            const response = await (window.authFetch || fetch)(`/api/cart/cart/update/${productId}`, {
+            const response = await (window.authFetch || fetch)(`/api/cart/cart/${productId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ quantity: quantity })
@@ -143,7 +143,7 @@
 
     async function removeFromCart(productId) {
         try {
-            const response = await (window.authFetch || fetch)(`/api/cart/cart/remove/${productId}`, { 
+            const response = await (window.authFetch || fetch)(`/api/cart/cart/${productId}`, { 
                 method: 'DELETE' 
             });
             
@@ -164,7 +164,7 @@
 
     async function checkout() {
         try {
-            const response = await (window.authFetch || fetch)("/api/order/orders/create", {
+            const response = await (window.authFetch || fetch)("/api/order/orders/", {
                 method: "POST"
             });
 

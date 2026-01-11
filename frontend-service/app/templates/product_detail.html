@@ -170,7 +170,7 @@
      data-product-category="{{ product['category_name'] }}">
     <div class="product-detail-container">
         <div class="product-image">
-            <img src="{{ url_for('static', path='images/' + product.product_id|string + '.webp') }}" alt="Фото товара">
+            <img src="/static/images/{{ product.product_id }}.webp" alt="Фото товара">
         </div>
         <div class="product-info">
             <h1>{{ product['name'] }}</h1>
@@ -338,7 +338,7 @@
                 const productId = "{{ product.product_id }}";
 
                 try {
-                    const response = await (window.authFetch || fetch)(`/api/cart/cart/add/${productId}?quantity=1`, {
+                    const response = await (window.authFetch || fetch)(`/api/cart/cart/${productId}?quantity=1`, {
                         method: "POST"
                     });
 
