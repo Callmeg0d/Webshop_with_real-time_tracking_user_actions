@@ -13,12 +13,12 @@ router = APIRouter(
 logger = get_logger(__name__)
 
 
-@router.post("/create")
+@router.post("/")
 async def create_order(
         user_id: int = Depends(get_user_id),
         order_service: OrderService = Depends(get_orders_service)
 ):
-    logger.info(f"POST /orders/create request from user {user_id}")
+    logger.info(f"POST /orders/ request from user {user_id}")
     try:
         order = await order_service.create_order(user_id)
         logger.info(f"Order {order.order_id} created via API for user {user_id}")

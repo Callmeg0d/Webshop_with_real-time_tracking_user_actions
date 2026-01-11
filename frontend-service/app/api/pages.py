@@ -8,7 +8,6 @@ from app.services.cart_client import get_cart
 from app.services.review_client import get_reviews
 
 router = APIRouter(
-    prefix="/pages",
     tags=["Фронтенд"]
 )
 
@@ -17,7 +16,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/login", response_class=HTMLResponse)
 async def get_login_page(request: Request):
-    return templates.TemplateResponse("auth/login.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @router.post("/login")
@@ -28,19 +27,19 @@ async def post_login(
 ):
     try:
         result = await login_user(email, password)
-        response = RedirectResponse(url="/pages/products", status_code=302)
+        response = RedirectResponse(url="/products", status_code=302)
         # Cookies устанавливаются user-service, но нужно их проксировать
         return response
     except Exception:
         return templates.TemplateResponse(
-            "auth/login.html",
+            "login.html",
             {"request": request, "error": "Неверный email или пароль"}
         )
 
 
 @router.get("/register", response_class=HTMLResponse)
 async def get_register_page(request: Request):
-    return templates.TemplateResponse("auth/register.html", {"request": request})
+    return templates.TemplateResponse("register.html", {"request": request})
 
 
 @router.post("/register")
@@ -51,10 +50,10 @@ async def post_register(
 ):
     try:
         await register_user(email, password)
-        return RedirectResponse(url="/pages/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
     except Exception:
         return templates.TemplateResponse(
-            "auth/register.html",
+            "register.html",
             {"request": request, "error": "Ошибка регистрации"}
         )
 
@@ -72,7 +71,7 @@ async def get_product_page(request: Request):
 async def get_cart_page(request: Request):
     user = await get_current_user(request.cookies)
     if not user:
-        return RedirectResponse(url="/pages/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
 
     cart_items = await get_cart(user["id"])
     total_cart_cost = sum(item.get("total_cost", 0) for item in cart_items)
@@ -104,7 +103,7 @@ async def get_product_detail_page(
 async def get_profile(request: Request):
     user = await get_current_user(request.cookies)
     if not user:
-        return RedirectResponse(url="/pages/login", status_code=302)
+        return RedirectResponse(url="/login", status_code=302)
 
     return templates.TemplateResponse(
         "profile.html",

@@ -20,7 +20,7 @@ async def get_all_products() -> list[dict]:
         for category_id in category_ids:
             try:
                 category_response = await client.get(
-                    f"{settings.PRODUCT_SERVICE_URL}/categories/id/{category_id}",
+                    f"{settings.PRODUCT_SERVICE_URL}/categories/{category_id}",
                     timeout=DEFAULT_HTTP_TIMEOUT
                 )
                 if category_response.status_code == 200:
@@ -51,7 +51,7 @@ async def get_product(product_id: int) -> dict:
         if product.get("category_id"):
             try:
                 category_response = await client.get(
-                    f"{settings.PRODUCT_SERVICE_URL}/categories/id/{product['category_id']}",
+                    f"{settings.PRODUCT_SERVICE_URL}/categories/{product['category_id']}",
                     timeout=DEFAULT_HTTP_TIMEOUT
                 )
                 if category_response.status_code == 200:

@@ -1,118 +1,111 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Товары</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-            color: #333;
-        }
-        h1, h4 {
-            margin: 0;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .search-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 30px;
-            gap: 10px;
-        }
-        #searchInput {
-            width: 50%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px 0 0 5px;
-            outline: none;
-        }
-        .search-button {
-            padding: 10px 15px;
-            background-color: #28a745;
-            border: none;
-            border-radius: 0 5px 5px 0;
-            cursor: pointer;
-        }
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1280px;
-            margin: auto;
-        }
-        .product-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-            transition: box-shadow 0.3s, transform 0.2s;
-            max-width: 300px;
-            text-decoration: none;
-            color: inherit;
-        }
-        .product-card:hover {
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-            transform: scale(1.02);
-        }
-        .product-card img {
-            width: 100%;
-            height: auto;
-            object-fit: cover;
-        }
-        .product-info {
-            padding: 15px;
-            text-align: center;
-        }
-        .product-info h1 {
-            font-size: 20px;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .product-info h4 {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 15px;
-        }
-    </style>
-    <script>
-        function searchProducts() {
-            let input = document.getElementById("searchInput").value.toLowerCase();
-            document.querySelectorAll(".product-card").forEach(product => {
-                let title = product.querySelector("h1").textContent.toLowerCase();
-                let description = product.querySelector("h4").textContent.toLowerCase();
-                product.style.display = (title.includes(input) || description.includes(input)) ? "flex" : "none";
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById("searchInput").addEventListener("keypress", (event) => {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    searchProducts();
-                }
-            });
-        });
-    </script>
-</head>
-
 {% extends "base.html" %}
+
+{% block head %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9f9f9;
+        color: #333;
+    }
+    h1, h4 {
+        margin: 0;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .search-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 30px;
+        gap: 10px;
+    }
+    #searchInput {
+        width: 50%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 5px 0 0 5px;
+        outline: none;
+    }
+    .search-button {
+        padding: 10px 15px;
+        background-color: #28a745;
+        border: none;
+        border-radius: 0 5px 5px 0;
+        cursor: pointer;
+    }
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        max-width: 1280px;
+        margin: auto;
+    }
+    .product-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        transition: box-shadow 0.3s, transform 0.2s;
+        max-width: 300px;
+        text-decoration: none;
+        color: inherit;
+    }
+    .product-card:hover {
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        transform: scale(1.02);
+    }
+    .product-card img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+    .product-info {
+        padding: 15px;
+        text-align: center;
+    }
+    .product-info h1 {
+        font-size: 20px;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .product-info h4 {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 15px;
+    }
+</style>
+<script>
+    function searchProducts() {
+        let input = document.getElementById("searchInput").value.toLowerCase();
+        document.querySelectorAll(".product-card").forEach(product => {
+            let title = product.querySelector("h1").textContent.toLowerCase();
+            let description = product.querySelector("h4").textContent.toLowerCase();
+            product.style.display = (title.includes(input) || description.includes(input)) ? "flex" : "none";
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("searchInput").addEventListener("keypress", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                searchProducts();
+            }
+        });
+    });
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -122,10 +115,10 @@
     </div>
     <div class="product-grid">
         {% for product in products %}
-        <a href="{{ url_for('get_product_detail_page', product_id=product.product_id) }}"
+        <a href="/product/{{ product.product_id }}"
            class="product-card"
            data-product-id="{{ product.product_id }}">
-            <img src="{{ url_for('static', path='images/' + product.product_id|string + '.webp') }}"
+            <img src="/static/images/{{ product.product_id }}.webp"
                  alt="Фото товара">
             <div class="product-info">
                 <h1>{{ product.name }}</h1>

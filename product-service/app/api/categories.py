@@ -29,13 +29,13 @@ async def get_all_categories(
         raise
 
 
-@router.get("/id/{category_id}", response_model=SCategoryResponse)
+@router.get("/{category_id}", response_model=SCategoryResponse)
 async def get_category_by_id(
         category_id: int,
         category_service: CategoryService = Depends(get_categories_service)
 ):
     """Получить категорию по ID."""
-    logger.info(f"GET /categories/id/{category_id} request")
+    logger.info(f"GET /categories/{category_id} request")
     try:
         category = await category_service.get_category_by_id(category_id)
         if not category:
