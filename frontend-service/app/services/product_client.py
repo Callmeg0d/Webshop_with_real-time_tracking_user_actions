@@ -1,6 +1,6 @@
 import httpx
 from app.config import settings
-from shared.constants import DEFAULT_HTTP_TIMEOUT
+from shared.constants import HttpTimeout
 
 
 async def get_all_products() -> list[dict]:
@@ -8,7 +8,7 @@ async def get_all_products() -> list[dict]:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.PRODUCT_SERVICE_URL}/products/",
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         products = response.json()
@@ -21,7 +21,7 @@ async def get_all_products() -> list[dict]:
             try:
                 category_response = await client.get(
                     f"{settings.PRODUCT_SERVICE_URL}/categories/{category_id}",
-                    timeout=DEFAULT_HTTP_TIMEOUT
+                    timeout=HttpTimeout.DEFAULT.value
                 )
                 if category_response.status_code == 200:
                     category = category_response.json()
@@ -42,7 +42,7 @@ async def get_product(product_id: int) -> dict:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.PRODUCT_SERVICE_URL}/products/{product_id}",
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         product = response.json()
@@ -52,7 +52,7 @@ async def get_product(product_id: int) -> dict:
             try:
                 category_response = await client.get(
                     f"{settings.PRODUCT_SERVICE_URL}/categories/{product['category_id']}",
-                    timeout=DEFAULT_HTTP_TIMEOUT
+                    timeout=HttpTimeout.DEFAULT.value
                 )
                 if category_response.status_code == 200:
                     category = category_response.json()

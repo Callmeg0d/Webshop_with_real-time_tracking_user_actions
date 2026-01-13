@@ -1,12 +1,7 @@
 import httpx
 from app.config import settings
 from shared import get_logger
-from shared.constants import (
-    DEFAULT_HTTP_TIMEOUT,
-    ANONYMOUS_USER_EMAIL,
-    ANONYMOUS_USER_NAME,
-    X_USER_ID_HEADER,
-)
+from shared.constants import HttpTimeout, AnonymousUser, HttpHeaders
 
 logger = get_logger(__name__)
 
@@ -29,8 +24,8 @@ async def get_user_info(user_id: int) -> dict:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{settings.USER_SERVICE_URL}/users/me",
-                headers={X_USER_ID_HEADER: str(user_id)},
-                timeout=DEFAULT_HTTP_TIMEOUT
+                headers={HttpHeaders.X_USER_ID.value: str(user_id)},
+                timeout=HttpTimeout.DEFAULT.value
             )
             response.raise_for_status()
             user_info = response.json()
@@ -67,7 +62,7 @@ async def get_users_batch(user_ids: list[int]) -> dict[int, dict]:
             response = await client.post(
                 f"{settings.USER_SERVICE_URL}/users/batch",
                 json={"user_ids": user_ids},
-                timeout=DEFAULT_HTTP_TIMEOUT
+                timeout=HttpTimeout.DEFAULT.value
             )
             response.raise_for_status()
             data = response.json()
@@ -77,7 +72,7 @@ async def get_users_batch(user_ids: list[int]) -> dict[int, dict]:
             users = data.get("users", {})
             for user_id, user_info in users.items():
                 result[int(user_id)] = {
-                    "email": user_info.get("email", ANONYMOUS_USER_EMAIL),
+                    "email": user_info.get("email", AnonymousUser.EMAIL),
                     "name": user_info.get("name")
                 }
             
@@ -85,8 +80,8 @@ async def get_users_batch(user_ids: list[int]) -> dict[int, dict]:
             for user_id in user_ids:
                 if user_id not in result:
                     result[user_id] = {
-                        "email": ANONYMOUS_USER_EMAIL,
-                        "name": ANONYMOUS_USER_NAME
+                        "email": AnonymousUser.EMAIL,
+                        "name": AnonymousUser.NAME
                     }
             
             logger.debug(f"Batch user info retrieved successfully for {len(result)} users")
@@ -96,8 +91,8 @@ async def get_users_batch(user_ids: list[int]) -> dict[int, dict]:
         # В случае ошибки возвращаем дефолтные значения для всех
         return {
             user_id: {
-                "email": ANONYMOUS_USER_EMAIL,
-                "name": ANONYMOUS_USER_NAME
+                "email": AnonymousUser.EMAIL,
+                "name": AnonymousUser.NAME
             }
             for user_id in user_ids
         }
@@ -106,8 +101,8 @@ async def get_users_batch(user_ids: list[int]) -> dict[int, dict]:
         # В случае ошибки возвращаем дефолтные значения для всех
         return {
             user_id: {
-                "email": ANONYMOUS_USER_EMAIL,
-                "name": ANONYMOUS_USER_NAME
+                "email": AnonymousUser.EMAIL,
+                "name": AnonymousUser.NAME
             }
             for user_id in user_ids
         }

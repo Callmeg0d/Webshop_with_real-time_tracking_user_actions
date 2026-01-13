@@ -1,7 +1,7 @@
 import httpx
 from app.config import settings
 from shared import get_logger
-from shared.constants import DEFAULT_HTTP_TIMEOUT
+from shared.constants import HttpTimeout
 
 logger = get_logger(__name__)
 
@@ -24,7 +24,7 @@ async def get_product(product_id: int) -> dict:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{settings.PRODUCT_SERVICE_URL}/products/{product_id}",
-                timeout=DEFAULT_HTTP_TIMEOUT
+                timeout=HttpTimeout.DEFAULT.value
             )
             response.raise_for_status()
             product = response.json()
