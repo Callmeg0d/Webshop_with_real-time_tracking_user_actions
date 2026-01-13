@@ -1,6 +1,6 @@
 import httpx
 from app.config import settings
-from shared.constants import DEFAULT_HTTP_TIMEOUT
+from shared.constants import HttpTimeout
 
 
 async def get_product(product_id: int) -> dict:
@@ -19,7 +19,7 @@ async def get_product(product_id: int) -> dict:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.PRODUCT_SERVICE_URL}/products/{product_id}",
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         return response.json()
@@ -42,7 +42,7 @@ async def get_stock_by_ids(product_ids: list[int]) -> dict[int, int]:
         response = await client.post(
             f"{settings.PRODUCT_SERVICE_URL}/products/stock/batch",
             json=product_ids,
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         return response.json()
@@ -63,7 +63,7 @@ async def decrease_stock(product_id: int, quantity: int) -> None:
         response = await client.patch(
             f"{settings.PRODUCT_SERVICE_URL}/products/{product_id}/stock",
             json={"quantity": -quantity},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
 

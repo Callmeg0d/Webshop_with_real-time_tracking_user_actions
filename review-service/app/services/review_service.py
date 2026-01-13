@@ -5,7 +5,7 @@ from app.domain.interfaces.reviews_repo import IReviewsRepository
 from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
 from app.schemas.reviews import SReviewWithUser
 from app.services.user_client import get_user_info, get_users_batch
-from shared.constants import ANONYMOUS_USER_EMAIL, ANONYMOUS_USER_NAME
+from shared.constants import AnonymousUser
 
 logger = get_logger(__name__)
 
@@ -54,13 +54,13 @@ class ReviewService:
             # Получаем данные пользователя из user-service
             try:
                 user = await get_user_info(user_id)
-                user_email = user.get("email", ANONYMOUS_USER_EMAIL)
+                user_email = user.get("email", AnonymousUser.EMAIL)
                 user_name = user.get("name")
                 logger.debug(f"User info retrieved for user {user_id}")
             except Exception as e:
                 logger.warning(f"Failed to get user info for user {user_id}: {e}, using anonymous")
-                user_email = ANONYMOUS_USER_EMAIL
-                user_name = ANONYMOUS_USER_NAME
+                user_email = AnonymousUser.EMAIL
+                user_name = AnonymousUser.NAME
 
             logger.info(f"Review created successfully for product {product_id} by user {user_id}")
             return SReviewWithUser(
@@ -99,12 +99,12 @@ class ReviewService:
             result = []
             for review in reviews:
                 user_info = users_info.get(review.user_id, {
-                    "email": ANONYMOUS_USER_EMAIL,
-                    "name": ANONYMOUS_USER_NAME
+                    "email": AnonymousUser.EMAIL,
+                    "name": AnonymousUser.NAME
                 })
                 
                 result.append(SReviewWithUser(
-                    user_email=user_info.get("email", ANONYMOUS_USER_EMAIL),
+                    user_email=user_info.get("email", AnonymousUser.EMAIL),
                     user_name=user_info.get("name"),
                     rating=review.rating,
                     feedback=review.feedback

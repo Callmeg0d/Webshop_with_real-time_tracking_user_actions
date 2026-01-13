@@ -1,6 +1,6 @@
 import httpx
 from app.config import settings
-from shared.constants import DEFAULT_HTTP_TIMEOUT, X_USER_ID_HEADER
+from shared.constants import HttpTimeout, HttpHeaders
 
 
 async def get_user_delivery_address(user_id: int) -> str | None:
@@ -19,8 +19,8 @@ async def get_user_delivery_address(user_id: int) -> str | None:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.USER_SERVICE_URL}/users/me",
-            headers={X_USER_ID_HEADER: str(user_id)},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            headers={HttpHeaders.X_USER_ID.value: str(user_id)},
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         user_data = response.json()
@@ -43,8 +43,8 @@ async def get_user_balance(user_id: int) -> int | None:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.USER_SERVICE_URL}/users/me",
-            headers={X_USER_ID_HEADER: str(user_id)},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            headers={HttpHeaders.X_USER_ID.value: str(user_id)},
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         user_data = response.json()
@@ -65,9 +65,9 @@ async def decrease_user_balance(user_id: int, amount: int) -> None:
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{settings.USER_SERVICE_URL}/users/balance/decrease",
-            headers={"X-User-Id": str(user_id)},
+            headers={HttpHeaders.X_USER_ID.value: str(user_id)},
             json={"amount": amount},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
 
@@ -88,8 +88,8 @@ async def get_user_email(user_id: int) -> str | None:
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.USER_SERVICE_URL}/users/me",
-            headers={X_USER_ID_HEADER: str(user_id)},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            headers={HttpHeaders.X_USER_ID.value: str(user_id)},
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         user_data = response.json()

@@ -3,7 +3,7 @@ from typing import AsyncGenerator, Callable
 from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from shared.constants import X_USER_ID_HEADER
+from shared.constants import HttpHeaders
 
 
 def create_get_db(
@@ -32,7 +32,7 @@ def create_get_db(
 
 
 async def get_user_id(
-    x_user_id: int = Header(..., alias=X_USER_ID_HEADER)
+    x_user_id: int = Header(..., alias=HttpHeaders.X_USER_ID.value)
 ) -> int:
     """
     Получает user_id из заголовка X-User-Id.

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Response
 import httpx
 from app.config import settings
-from shared.constants import GATEWAY_HTTP_TIMEOUT
+from shared.constants import HttpTimeout
 
 router = APIRouter(prefix="/api", tags=["API Gateway"])
 
@@ -50,7 +50,7 @@ async def proxy_request(service: str, path: str, request: Request):
                 headers=headers,
                 cookies=cookies,
                 content=body if body else None,
-                timeout=GATEWAY_HTTP_TIMEOUT,
+                timeout=HttpTimeout.GATEWAY.value,
                 follow_redirects=True
             )
             

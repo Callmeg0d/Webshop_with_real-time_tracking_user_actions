@@ -1,11 +1,20 @@
-# HTTP клиенты
-DEFAULT_HTTP_TIMEOUT = 5.0
-GATEWAY_HTTP_TIMEOUT = 10.0
+from enum import Enum
+from typing import Final
 
-# Пользователи
-ANONYMOUS_USER_EMAIL = "Анонимный пользователь"
-ANONYMOUS_USER_NAME = None
 
-# HTTP заголовки
-X_USER_ID_HEADER = "X-User-Id"
+class HttpTimeout(float, Enum):
+    """Таймауты для HTTP клиентов."""
+    DEFAULT = 5.0
+    GATEWAY = 10.0
+
+
+class AnonymousUser:
+    """Константы для анонимных пользователей."""
+    EMAIL: Final[str] = "Анонимный пользователь"
+    NAME: Final[None] = None
+
+
+class HttpHeaders(str, Enum):
+    """HTTP заголовки."""
+    X_USER_ID = "X-User-Id"
 

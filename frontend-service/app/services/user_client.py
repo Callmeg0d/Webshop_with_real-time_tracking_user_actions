@@ -1,6 +1,6 @@
 import httpx
 from app.config import settings
-from shared.constants import DEFAULT_HTTP_TIMEOUT
+from shared.constants import HttpTimeout
 
 
 async def login_user(email: str, password: str) -> dict:
@@ -9,7 +9,7 @@ async def login_user(email: str, password: str) -> dict:
         response = await client.post(
             f"{settings.USER_SERVICE_URL}/auth/login",
             json={"email": email, "password": password},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         return response.json()
@@ -21,7 +21,7 @@ async def register_user(email: str, password: str) -> dict:
         response = await client.post(
             f"{settings.USER_SERVICE_URL}/auth/register",
             json={"email": email, "password": password},
-            timeout=DEFAULT_HTTP_TIMEOUT
+            timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
         return response.json()
@@ -34,7 +34,7 @@ async def get_current_user(cookies: dict) -> dict | None:
             response = await client.get(
                 f"{settings.USER_SERVICE_URL}/auth/me",
                 cookies=cookies,
-                timeout=DEFAULT_HTTP_TIMEOUT
+                timeout=HttpTimeout.DEFAULT.value
             )
             if response.status_code == 200:
                 return response.json()
@@ -50,7 +50,7 @@ async def refresh_token(cookies: dict) -> bool:
             response = await client.post(
                 f"{settings.USER_SERVICE_URL}/auth/refresh",
                 cookies=cookies,
-                timeout=DEFAULT_HTTP_TIMEOUT
+                timeout=HttpTimeout.DEFAULT.value
             )
             return response.status_code == 200
         except Exception:
