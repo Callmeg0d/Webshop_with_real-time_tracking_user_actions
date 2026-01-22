@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from shared import get_logger
 
 from app.dependencies import get_categories_service
@@ -87,6 +88,9 @@ async def create_category(
         created = await category_service.create_category(category)
         logger.info(f"Category created by API: {created.name}")
         return created
+    except IntegrityError as e:
+        logger.error(f"Integrity error creating category by API: {e}", exc_info=True)
+        raise HTTPException(status_code=409, detail="Category with this name already exists")
     except Exception as e:
         logger.error(f"Error creating category by API: {e}", exc_info=True)
         raise
