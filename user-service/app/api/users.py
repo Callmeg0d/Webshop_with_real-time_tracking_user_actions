@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Body, HTTPException
 from starlette.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from shared import get_logger
 
 from app.core.container import Container
@@ -193,6 +194,9 @@ async def decrease_balance(
         await user_service.decrease_balance(user_id, request.amount)
         logger.info(f"Balance decreased successfully by API for user {user_id}")
         return {"message": "Balance decreased successfully"}
+    except IntegrityError as e:
+        logger.error(f"Integrity error decreasing balance by API for user {user_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database constraint violation")
     except Exception as e:
         logger.error(f"Error decreasing balance by API for user {user_id}: {e}", exc_info=True)
         raise
