@@ -22,8 +22,16 @@ prometheus-fastapi-instrumentator = "7.0.2"
 sentry-sdk = "2.23.1"
 shared = {path = "../shared", develop = true}
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-asyncio = "^0.24.0"
+pytest-mock = "^3.15.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
 
 
