@@ -18,3 +18,7 @@ class HttpHeaders(str, Enum):
     """HTTP заголовки."""
     X_USER_ID = "X-User-Id"
 
+
+# Тестовые константы
+DEFAULT_TEST_USER_ID: Final[int] = 1
+

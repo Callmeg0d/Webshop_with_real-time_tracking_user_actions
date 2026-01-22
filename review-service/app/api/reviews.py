@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
-from app.dependencies import get_reviews_service
+from app.dependencies import get_reviews_service, check_product_exists
 from shared import get_user_id, get_logger
 from app.services.review_service import ReviewService
 from app.schemas.reviews import SReviewCreate, SReviewWithUser
@@ -36,6 +36,16 @@ async def create_review(
         review_service: ReviewService = Depends(get_reviews_service)
 ):
     logger.info(f"POST /reviews/{product_id} request from user {user_id}, rating: {review_data.rating}")
+    try:
+        # Проверяем существование продукта
+        await check_product_exists(product_id)
+    except HTTPException as e:
+        logger.warning(f"Product {product_id} not found when creating review by user {user_id}: {e.detail}")
+        raise
+    except Exception as e:
+        logger.error(f"Error checking product existence for product {product_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to verify product existence")
+    
     try:
         review = await review_service.create_review(
             user_id=user_id,
