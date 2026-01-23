@@ -45,6 +45,21 @@ async def add_to_cart(
         raise
 
 
+@router.delete("/clear")
+async def clear_cart(
+        user_id: int = Depends(get_user_id),
+        cart_service: CartService = Depends(get_carts_service)
+):
+    logger.info(f"DELETE /cart/clear request from user {user_id}")
+    try:
+        await cart_service.clear_user_cart(user_id)
+        logger.info(f"Cart cleared by API for user {user_id}")
+        return {"message": "Cart cleared"}
+    except Exception as e:
+        logger.error(f"Error clearing cart by API for user {user_id}: {e}", exc_info=True)
+        raise
+
+
 @router.delete("/{product_id}")
 async def remove_from_cart(
         product_id: int,
@@ -80,20 +95,5 @@ async def update_cart_item(
         }
     except Exception as e:
         logger.error(f"Error updating cart item by API for user {user_id}: {e}", exc_info=True)
-        raise
-
-
-@router.delete("/clear")
-async def clear_cart(
-        user_id: int = Depends(get_user_id),
-        cart_service: CartService = Depends(get_carts_service)
-):
-    logger.info(f"DELETE /cart/clear request from user {user_id}")
-    try:
-        await cart_service.clear_user_cart(user_id)
-        logger.info(f"Cart cleared by API for user {user_id}")
-        return {"message": "Cart cleared"}
-    except Exception as e:
-        logger.error(f"Error clearing cart by API for user {user_id}: {e}", exc_info=True)
         raise
 
