@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel, ConfigDict
 
 
@@ -13,3 +14,15 @@ class SProducts(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class SortEnum(str, Enum):
+    ASC = "ASC"
+    DESC = "DESC"
+
+class Pagination(BaseModel):
+    page: int
+    per_page: int
+    order: SortEnum
+
+
+class SProductsCount(BaseModel):
+    total: int

@@ -3,7 +3,8 @@ from typing import Annotated
 from shared import get_logger
 
 from app.dependencies import get_products_service
-from app.schemas.products import SProducts
+from app.api.dependencies import pagination_params
+from app.schemas.products import Pagination, SProducts, SProductsCount
 from app.schemas.stock import StockUpdateRequest
 from app.services.product_service import ProductService
 from app.exceptions import CannotFindProductWithThisId
@@ -18,16 +19,25 @@ logger = get_logger(__name__)
 
 @router.get("/", response_model=list[SProducts])
 async def get_products(
+        pagination: Pagination = Depends(pagination_params),
         product_service: ProductService = Depends(get_products_service)
 ):
     logger.info("GET /products/ request")
     try:
-        products = await product_service.get_all_products()
+        products = await product_service.get_all_products(pagination)
         logger.info(f"Returned {len(products)} products")
         return products
     except Exception as e:
         logger.error(f"Error fetching products by API: {e}", exc_info=True)
         raise
+
+
+@router.get("/count", response_model=SProductsCount)
+async def get_products_count(
+        product_service: ProductService = Depends(get_products_service),
+):
+    total = await product_service.count_products()
+    return SProductsCount(total=total)
 
 
 @router.get("/{product_id}", response_model=SProducts)

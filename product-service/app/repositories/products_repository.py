@@ -1,8 +1,7 @@
-from typing import List, Optional
-
-from sqlalchemy import select, update
+from sqlalchemy import select, update, asc, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.schemas.products import SortEnum, Pagination
 from app.domain.entities.product import ProductItem
 from app.domain.mappers.product import ProductMapper
 from app.models import Products
@@ -105,11 +104,21 @@ class ProductsRepository:
         orm_product = result.scalar_one_or_none()
         return self.mapper.to_entity(orm_product) if orm_product else None
 
-    async def get_all_products(self) -> list[ProductItem]:
+    async def count_products(self) -> int:
+        result = await self.db.execute(select(func.count(Products.product_id)))
+        return int(result.scalar_one())
+
+    async def get_all_products(self, pagination: Pagination) -> list[ProductItem]:
         """
         Возвращает список всех товаров в виде доменных сущностей.
         """
-        result = await self.db.execute(select(Products))
+        order = desc if pagination.order == SortEnum.DESC else asc
+        result = await self.db.execute(
+            select(Products)
+            .limit(pagination.per_page)
+            .offset((pagination.page - 1) * pagination.per_page)
+            .order_by(order(Products.product_id))
+        )
         orm_models = list(result.scalars().all())
         return [
             self.mapper.to_entity(orm_model)

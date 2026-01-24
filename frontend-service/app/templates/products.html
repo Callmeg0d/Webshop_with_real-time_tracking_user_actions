@@ -85,6 +85,30 @@
         color: #666;
         margin-bottom: 15px;
     }
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    .pagination a, .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #333;
+        background: #fff;
+        font-size: 14px;
+    }
+    .pagination .disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    .pagination .current {
+        border-color: #28a745;
+        font-weight: 600;
+    }
 </style>
 <script>
     function searchProducts() {
@@ -128,6 +152,46 @@
             </div>
         </a>
         {% endfor %}
+    </div>
+
+    <div class="pagination">
+        {% if has_prev %}
+            <a href="/products?page={{ page - 1 }}&per_page={{ per_page }}">← Предыдущая</a>
+        {% else %}
+            <span class="disabled">← Предыдущая</span>
+        {% endif %}
+
+        {% if pages and pages > 1 %}
+            {% if start_page > 1 %}
+                <a href="/products?page=1&per_page={{ per_page }}">1</a>
+                {% if start_page > 2 %}
+                    <span class="disabled">…</span>
+                {% endif %}
+            {% endif %}
+
+            {% for p in range(start_page, end_page + 1) %}
+                {% if p == page %}
+                    <span class="current">{{ p }}</span>
+                {% else %}
+                    <a href="/products?page={{ p }}&per_page={{ per_page }}">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if end_page < pages %}
+                {% if end_page < pages - 1 %}
+                    <span class="disabled">…</span>
+                {% endif %}
+                <a href="/products?page={{ pages }}&per_page={{ per_page }}">{{ pages }}</a>
+            {% endif %}
+        {% else %}
+            <span class="current">1</span>
+        {% endif %}
+
+        {% if has_next %}
+            <a href="/products?page={{ page + 1 }}&per_page={{ per_page }}">Следующая →</a>
+        {% else %}
+            <span class="disabled">Следующая →</span>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

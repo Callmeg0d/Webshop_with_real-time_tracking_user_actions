@@ -1,9 +1,11 @@
+from math import ceil
+
 from fastapi import APIRouter, Depends, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.services.user_client import get_current_user, login_user, register_user
-from app.services.product_client import get_all_products, get_product
+from app.services.product_client import get_all_products, get_product, get_products_count
 from app.services.cart_client import get_cart
 from app.services.review_client import get_reviews
 
@@ -59,11 +61,36 @@ async def post_register(
 
 
 @router.get("/products")
-async def get_product_page(request: Request):
-    products = await get_all_products()
+async def get_product_page(
+    request: Request,
+    page: int = 1,
+    per_page: int = 10,
+):
+    page = max(1, page)
+    per_page = min(max(1, per_page), 50)
+
+    total = await get_products_count()
+    pages = max(1, int(ceil(total / per_page)) if per_page else 1)
+    page = min(page, pages)
+
+    products = await get_all_products(page=page, per_page=per_page)
+
+    start_page = max(1, page - 2)
+    end_page = min(pages, page + 2)
     return templates.TemplateResponse(
         name="products.html",
-        context={"request": request, "products": products}
+        context={
+            "request": request,
+            "products": products,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+            "start_page": start_page,
+            "end_page": end_page,
+            "has_prev": page > 1,
+            "has_next": page < pages,
+        },
     )
 
 

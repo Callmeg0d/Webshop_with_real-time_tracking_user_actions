@@ -2,7 +2,7 @@ from shared import get_logger
 
 from app.domain.interfaces.products_repo import IProductsRepository
 from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
-from app.schemas.products import SProducts
+from app.schemas.products import Pagination, SProducts
 from app.exceptions import CannotFindProductWithThisId
 
 logger = get_logger(__name__)
@@ -17,14 +17,21 @@ class ProductService:
         self.products_repository = products_repository
         self.uow_factory = uow_factory
 
-    async def get_all_products(self) -> list[SProducts]:
+    async def get_all_products(self, pagination: Pagination) -> list[SProducts]:
         logger.debug("Fetching all products")
         try:
-            products = await self.products_repository.get_all_products()
+            products = await self.products_repository.get_all_products(pagination)
             logger.debug(f"Found {len(products)} products")
             return [SProducts.model_validate(p) for p in products]
         except Exception as e:
             logger.error(f"Error fetching all products: {e}", exc_info=True)
+            raise
+
+    async def count_products(self) -> int:
+        try:
+            return await self.products_repository.count_products()
+        except Exception as e:
+            logger.error(f"Error counting products: {e}", exc_info=True)
             raise
 
     async def get_product_by_id(self, product_id: int) -> SProducts:
