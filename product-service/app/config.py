@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     DB_HOST: str
     DB_INTERNAL_PORT: int
+    DB_EXTERNAL_PORT: int
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
