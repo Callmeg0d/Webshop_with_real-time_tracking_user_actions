@@ -20,9 +20,9 @@ async def get_clickhouse_client() -> ChClient:
         _session = ClientSession()
         _client = ChClient(
             _session,
-            url=f"http://{settings.CLICKHOUSE_HOST}:{settings.CLICKHOUSE_PORT}",
+            url=f"http://{settings.CLICKHOUSE_HOST}:{settings.CLICKHOUSE_INTERNAL_PORT}",
         )
-        logger.debug(f"ClickHouse client created, url: http://{settings.CLICKHOUSE_HOST}:{settings.CLICKHOUSE_PORT}")
+        logger.debug(f"ClickHouse client created, url: http://{settings.CLICKHOUSE_HOST}:{settings.CLICKHOUSE_INTERNAL_PORT}")
     return _client
 
 
