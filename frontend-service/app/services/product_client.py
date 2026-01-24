@@ -3,11 +3,29 @@ from app.config import settings
 from shared.constants import HttpTimeout
 
 
-async def get_all_products() -> list[dict]:
-    """Получает все продукты через product-service"""
+async def get_products_count() -> int:
+    """Получает общее количество продуктов через product-service"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{settings.PRODUCT_SERVICE_URL}/products/count",
+            timeout=HttpTimeout.DEFAULT.value,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        return int(payload.get("total", 0))
+
+
+async def get_all_products(
+    *,
+    page: int = 1,
+    per_page: int = 10,
+    order: str = "DESC",
+) -> list[dict]:
+    """Получает продукты через product-service (с пагинацией)"""
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{settings.PRODUCT_SERVICE_URL}/products/",
+            params={"page": page, "per_page": per_page, "order": order},
             timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()

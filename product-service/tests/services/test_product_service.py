@@ -3,6 +3,7 @@ import pytest
 from app.domain.entities.product import ProductItem
 from app.exceptions import CannotFindProductWithThisId
 from app.services.product_service import ProductService
+from app.schemas.products import Pagination, SortEnum
 
 
 class TestProductServiceGetAllProducts:
@@ -34,6 +35,7 @@ class TestProductServiceGetAllProducts:
         mocker
     ):
         """Тест успешного получения всех товаров"""
+        pagination = Pagination(page=1, per_page=10, order=SortEnum.DESC)
         products = [
             ProductItem(
                 product_id=1,
@@ -59,7 +61,7 @@ class TestProductServiceGetAllProducts:
         
         mock_repository.get_all_products = mocker.AsyncMock(return_value=products)
         
-        result = await product_service.get_all_products()
+        result = await product_service.get_all_products(pagination)
         
         assert len(result) == 2
         assert result[0].product_id == 1
@@ -67,7 +69,7 @@ class TestProductServiceGetAllProducts:
         assert result[1].product_id == 2
         assert result[1].name == "Product 2"
         
-        mock_repository.get_all_products.assert_called_once()
+        mock_repository.get_all_products.assert_called_once_with(pagination)
     
     @pytest.mark.asyncio
     async def test_get_all_products_empty(
@@ -77,12 +79,13 @@ class TestProductServiceGetAllProducts:
         mocker
     ):
         """Тест получения всех товаров при пустой БД"""
+        pagination = Pagination(page=1, per_page=10, order=SortEnum.DESC)
         mock_repository.get_all_products = mocker.AsyncMock(return_value=[])
         
-        result = await product_service.get_all_products()
+        result = await product_service.get_all_products(pagination)
         
         assert result == []
-        mock_repository.get_all_products.assert_called_once()
+        mock_repository.get_all_products.assert_called_once_with(pagination)
     
     @pytest.mark.asyncio
     async def test_get_all_products_error(
@@ -92,10 +95,11 @@ class TestProductServiceGetAllProducts:
         mocker
     ):
         """Тест обработки ошибки при получении товаров"""
+        pagination = Pagination(page=1, per_page=10, order=SortEnum.DESC)
         mock_repository.get_all_products = mocker.AsyncMock(side_effect=Exception("Database error"))
         
         with pytest.raises(Exception, match="Database error"):
-            await product_service.get_all_products()
+            await product_service.get_all_products(pagination)
 
 
 class TestProductServiceGetProductById:
