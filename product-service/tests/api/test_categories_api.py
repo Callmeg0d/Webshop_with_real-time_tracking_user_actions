@@ -150,7 +150,6 @@ class TestCreateCategory:
     async def test_create_category_without_description(
         self,
         async_client: AsyncClient,
-        test_db_session
     ):
         """Тест создания категории без описания"""
         category_data = {
@@ -183,7 +182,7 @@ class TestCreateCategory:
         }
         
         response = await async_client.post("/categories/", json=category_data)
-
+        
         assert response.status_code == 409
         data = response.json()
         assert "detail" in data
