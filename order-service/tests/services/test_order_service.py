@@ -68,7 +68,7 @@ class TestOrderServiceCreateOrder:
     ):
         """Тест успешного создания заказа"""
         user_id = 1
-
+        
         mocker.patch(
             'app.services.order_service.get_cart_items',
             return_value=[

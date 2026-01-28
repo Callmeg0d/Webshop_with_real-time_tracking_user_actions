@@ -9,7 +9,7 @@ class ProductItem:
     description: str
     price: int
     product_quantity: int
-    image: int | None
+    image: str | None
     features: dict[str, str] | None
     category_id: int
 

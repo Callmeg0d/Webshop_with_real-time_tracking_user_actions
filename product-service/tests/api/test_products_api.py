@@ -13,6 +13,7 @@ class TestGetProducts:
     async def test_get_products_empty(
         self,
         async_client: AsyncClient,
+        test_db_session
     ):
         """Тест получения товаров при пустой БД"""
         response = await async_client.get("/products/")
@@ -32,7 +33,7 @@ class TestGetProducts:
         category = Categories(name="Test Category", description="Test Description")
         test_db_session.add(category)
         await test_db_session.flush()
-
+        
         product1 = Products(
             product_id=1,
             name="Product 1",
@@ -79,14 +80,14 @@ class TestGetProduct:
         category = Categories(name="Test Category", description="Test Description")
         test_db_session.add(category)
         await test_db_session.flush()
-
+        
         product = Products(
             product_id=1,
             name="Test Product",
             description="Test Description",
             price=1500,
             product_quantity=5,
-            image=123,
+            image="test-image",
             features={"size": "M", "color": "blue"},
             category_id=category.id
         )
@@ -102,7 +103,7 @@ class TestGetProduct:
         assert data["description"] == "Test Description"
         assert data["price"] == 1500
         assert data["product_quantity"] == 5
-        assert data["image"] == 123
+        assert data["image"] == "test-image"
         assert data["features"] == {"size": "M", "color": "blue"}
         assert data["category_id"] == category.id
     
@@ -132,7 +133,7 @@ class TestGetStockBatch:
         category = Categories(name="Test Category", description="Test Description")
         test_db_session.add(category)
         await test_db_session.flush()
-
+        
         product1 = Products(
             product_id=1,
             name="Product 1",
@@ -190,7 +191,7 @@ class TestGetStockBatch:
         category = Categories(name="Test Category", description="Test Description")
         test_db_session.add(category)
         await test_db_session.flush()
-
+        
         product = Products(
             product_id=1,
             name="Product 1",
@@ -246,7 +247,7 @@ class TestUpdateStock:
         category = Categories(name="Test Category", description="Test Description")
         test_db_session.add(category)
         await test_db_session.flush()
-
+        
         product = Products(
             product_id=1,
             name="Test Product",
@@ -260,7 +261,6 @@ class TestUpdateStock:
         test_db_session.add(product)
         await test_db_session.commit()
         
-        # Уменьшаем остаток
         response = await async_client.patch(
             "/products/1/stock",
             json={"quantity": -30}
@@ -274,3 +274,4 @@ class TestUpdateStock:
         product_repo = ProductsRepository(test_db_session)
         quantity = await product_repo.get_quantity(1)
         assert quantity == 70
+    

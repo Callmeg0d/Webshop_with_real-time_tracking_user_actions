@@ -20,34 +20,108 @@
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    .search-container {
+
+    .layout {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 30px;
-        gap: 10px;
+        gap: 24px;
     }
-    #searchInput {
-        width: 50%;
-        padding: 10px;
-        font-size: 16px;
+
+    .filters-panel {
+        width: 260px;
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        background-color: #fafafa;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        flex-shrink: 0;
+    }
+
+    .filters-panel h2 {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .filter-group {
+        margin-bottom: 18px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 6px;
+    }
+
+    .filter-group input[type="text"],
+    .filter-group input[type="number"] {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
         border: 1px solid #ddd;
-        border-radius: 5px 0 0 5px;
+        border-radius: 6px;
         outline: none;
     }
-    .search-button {
-        padding: 10px 15px;
-        background-color: #28a745;
-        border: none;
-        border-radius: 0 5px 5px 0;
-        cursor: pointer;
+
+    .filter-group input[type="text"]:focus,
+    .filter-group input[type="number"]:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 1px rgba(40, 167, 69, 0.1);
     }
+
+    .filter-inline {
+        display: flex;
+        gap: 8px;
+    }
+
+    .filter-inline input {
+        flex: 1;
+    }
+
+    .filters-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .filters-actions button {
+        flex: 1;
+        padding: 8px 0;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .apply-button {
+        background-color: #28a745;
+        color: #fff;
+    }
+
+    .reset-button {
+        background-color: #e9ecef;
+        color: #333;
+    }
+
+    .filters-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .products-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
     .product-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
         gap: 20px;
-        max-width: 1280px;
-        margin: auto;
+        width: 100%;
     }
     .product-card {
         display: flex;
@@ -80,11 +154,6 @@
         color: #333;
         margin-bottom: 10px;
     }
-    .product-info h4 {
-        font-size: 16px;
-        color: #666;
-        margin-bottom: 15px;
-    }
     .pagination {
         display: flex;
         justify-content: center;
@@ -109,89 +178,164 @@
         border-color: #28a745;
         font-weight: 600;
     }
+
+    @media (max-width: 960px) {
+        .layout {
+            flex-direction: column;
+        }
+
+        .filters-panel {
+            width: 100%;
+        }
+    }
 </style>
 <script>
-    function searchProducts() {
-        let input = document.getElementById("searchInput").value.toLowerCase();
-        document.querySelectorAll(".product-card").forEach(product => {
-            let title = product.querySelector("h1").textContent.toLowerCase();
-            let description = product.querySelector("h4").textContent.toLowerCase();
-            product.style.display = (title.includes(input) || description.includes(input)) ? "flex" : "none";
+    function applyFilters() {
+        const searchValue = document.getElementById("searchInput").value.toLowerCase();
+        const minPriceInput = document.getElementById("minPrice");
+        const maxPriceInput = document.getElementById("maxPrice");
+        const inStockOnly = document.getElementById("inStockOnly").checked;
+
+        const minPrice = minPriceInput.value ? parseInt(minPriceInput.value, 10) : 0;
+        const maxPrice = maxPriceInput.value ? parseInt(maxPriceInput.value, 10) : Number.MAX_SAFE_INTEGER;
+
+        document.querySelectorAll(".product-card").forEach(card => {
+            const title = card.querySelector("h1").textContent.toLowerCase();
+            const price = parseInt(card.dataset.price, 10);
+            const quantity = parseInt(card.dataset.quantity, 10);
+
+            const matchesSearch = !searchValue || title.includes(searchValue);
+            const matchesPrice = (!minPrice || price >= minPrice) && (!maxPrice || price <= maxPrice);
+            const matchesStock = !inStockOnly || quantity > 0;
+
+            const visible = matchesSearch && matchesPrice && matchesStock;
+            card.style.display = visible ? "flex" : "none";
         });
     }
 
+    function resetFilters() {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("minPrice").value = "";
+        document.getElementById("maxPrice").value = "";
+        document.getElementById("inStockOnly").checked = false;
+        applyFilters();
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("searchInput").addEventListener("keypress", (event) => {
+        const searchInput = document.getElementById("searchInput");
+        const minPriceInput = document.getElementById("minPrice");
+        const maxPriceInput = document.getElementById("maxPrice");
+        const inStockCheckbox = document.getElementById("inStockOnly");
+
+        searchInput.addEventListener("keypress", (event) => {
             if (event.key === "Enter") {
                 event.preventDefault();
-                searchProducts();
+                applyFilters();
             }
         });
+
+        searchInput.addEventListener("input", () => {
+            applyFilters();
+        });
+
+        minPriceInput.addEventListener("change", applyFilters);
+        maxPriceInput.addEventListener("change", applyFilters);
+        inStockCheckbox.addEventListener("change", applyFilters);
     });
 </script>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Поиск товаров...">
-        <button class="search-button" onclick="searchProducts()">Поиск</button>
-    </div>
-    <div class="product-grid">
-        {% for product in products %}
-        <a href="/product/{{ product.product_id }}"
-           class="product-card"
-           data-product-id="{{ product.product_id }}">
-            <img src="/static/images/{{ product.product_id }}.webp"
-                 alt="Фото товара">
-            <div class="product-info">
-                <h1>{{ product.name }}</h1>
-                <h4>{{ product.description }}</h4>
-                <h3>{{ product.price }} ₽</h3>
-                <p class="product-quantity"><strong>В наличии:</strong> {{ product.product_quantity }}</p>
+    <div class="layout">
+        <aside class="filters-panel">
+            <h2>Фильтры</h2>
+
+            <div class="filter-group">
+                <label for="searchInput">Поиск по названию</label>
+                <input type="text" id="searchInput" placeholder="Например, iPhone">
             </div>
-        </a>
-        {% endfor %}
-    </div>
 
-    <div class="pagination">
-        {% if has_prev %}
-            <a href="/products?page={{ page - 1 }}&per_page={{ per_page }}">← Предыдущая</a>
-        {% else %}
-            <span class="disabled">← Предыдущая</span>
-        {% endif %}
+            <div class="filter-group">
+                <label>Цена, ₽</label>
+                <div class="filter-inline">
+                    <input type="number" id="minPrice" placeholder="от">
+                    <input type="number" id="maxPrice" placeholder="до">
+                </div>
+            </div>
 
-        {% if pages and pages > 1 %}
-            {% if start_page > 1 %}
-                <a href="/products?page=1&per_page={{ per_page }}">1</a>
-                {% if start_page > 2 %}
-                    <span class="disabled">…</span>
-                {% endif %}
-            {% endif %}
+            <div class="filter-group">
+                <label class="filters-checkbox">
+                    <input type="checkbox" id="inStockOnly">
+                    Только в наличии
+                </label>
+            </div>
 
-            {% for p in range(start_page, end_page + 1) %}
-                {% if p == page %}
-                    <span class="current">{{ p }}</span>
+            <div class="filters-actions">
+                <button type="button" class="apply-button" onclick="applyFilters()">Применить</button>
+                <button type="button" class="reset-button" onclick="resetFilters()">Сбросить</button>
+            </div>
+        </aside>
+
+        <section class="products-section">
+            <div class="product-grid">
+                {% for product in products %}
+                <a href="/product/{{ product.product_id }}"
+                   class="product-card"
+                   data-product-id="{{ product.product_id }}"
+                   data-price="{{ product.price }}"
+                   data-quantity="{{ product.product_quantity }}">
+                    <img src="/static/images/{{ product.image }}.webp"
+                         alt="Фото товара">
+                    <div class="product-info">
+                        <h1>{{ product.name }}</h1>
+                        <h3>{{ product.price }} ₽</h3>
+                        <p class="product-quantity"><strong>В наличии:</strong> {{ product.product_quantity }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            <div class="pagination">
+                {% if has_prev %}
+                    <a href="/products?page={{ page - 1 }}&per_page={{ per_page }}">← Предыдущая</a>
                 {% else %}
-                    <a href="/products?page={{ p }}&per_page={{ per_page }}">{{ p }}</a>
+                    <span class="disabled">← Предыдущая</span>
                 {% endif %}
-            {% endfor %}
 
-            {% if end_page < pages %}
-                {% if end_page < pages - 1 %}
-                    <span class="disabled">…</span>
+                {% if pages and pages > 1 %}
+                    {% if start_page > 1 %}
+                        <a href="/products?page=1&per_page={{ per_page }}">1</a>
+                        {% if start_page > 2 %}
+                            <span class="disabled">…</span>
+                        {% endif %}
+                    {% endif %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                        {% if p == page %}
+                            <span class="current">{{ p }}</span>
+                        {% else %}
+                            <a href="/products?page={{ p }}&per_page={{ per_page }}">{{ p }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if end_page < pages %}
+                        {% if end_page < pages - 1 %}
+                            <span class="disabled">…</span>
+                        {% endif %}
+                        <a href="/products?page={{ pages }}&per_page={{ per_page }}">{{ pages }}</a>
+                    {% endif %}
+                {% else %}
+                    <span class="current">1</span>
                 {% endif %}
-                <a href="/products?page={{ pages }}&per_page={{ per_page }}">{{ pages }}</a>
-            {% endif %}
-        {% else %}
-            <span class="current">1</span>
-        {% endif %}
 
-        {% if has_next %}
-            <a href="/products?page={{ page + 1 }}&per_page={{ per_page }}">Следующая →</a>
-        {% else %}
-            <span class="disabled">Следующая →</span>
-        {% endif %}
+                {% if has_next %}
+                    <a href="/products?page={{ page + 1 }}&per_page={{ per_page }}">Следующая →</a>
+                {% else %}
+                    <span class="disabled">Следующая →</span>
+                {% endif %}
+            </div>
+        </section>
     </div>
 </div>
 {% endblock %}

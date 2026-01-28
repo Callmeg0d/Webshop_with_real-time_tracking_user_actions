@@ -53,7 +53,7 @@ class TestProductServiceGetAllProducts:
                 description="Description 2",
                 price=2000,
                 product_quantity=20,
-                image=123,
+                image="image-2",
                 features={"color": "red"},
                 category_id=1
             )
@@ -134,7 +134,7 @@ class TestProductServiceGetProductById:
             description="Test Description",
             price=1500,
             product_quantity=5,
-            image=123,
+            image="test-image",
             features={"size": "M"},
             category_id=1
         )

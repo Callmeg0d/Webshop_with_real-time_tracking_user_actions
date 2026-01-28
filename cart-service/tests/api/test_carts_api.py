@@ -18,7 +18,6 @@ class TestGetCart:
         """Тест успешного получения корзины"""
         user_id = 1
         
-        # Создаем товары в корзине
         cart_item1 = ShoppingCarts(
             user_id=user_id,
             product_id=1,
@@ -35,7 +34,6 @@ class TestGetCart:
         test_db_session.add(cart_item2)
         await test_db_session.commit()
         
-        # Мокаем product_client
         mocker.patch(
             'app.services.cart_service.get_product',
             new=mocker.AsyncMock(side_effect=[
@@ -97,7 +95,6 @@ class TestAddToCart:
         product_id = 1
         quantity = 2
         
-        # Мокаем product_client
         mocker.patch(
             'app.services.cart_service.get_product',
             new=mocker.AsyncMock(return_value={
@@ -143,7 +140,7 @@ class TestAddToCart:
         )
         test_db_session.add(existing_item)
         await test_db_session.commit()
-
+        
         mocker.patch(
             'app.services.cart_service.get_product',
             new=mocker.AsyncMock(return_value={
@@ -162,8 +159,8 @@ class TestAddToCart:
         # Проверяем, что количество обновлено
         cart_repo = CartsRepository(test_db_session)
         cart_item = await cart_repo.get_cart_item_by_id(user_id, product_id)
-        assert cart_item.quantity == 5  # 2 + 3
-        assert cart_item.total_cost == 5000  # 1000 * 5
+        assert cart_item.quantity == 5
+        assert cart_item.total_cost == 5000
 
 
 class TestRemoveFromCart:
@@ -178,7 +175,7 @@ class TestRemoveFromCart:
         """Тест успешного удаления товара из корзины"""
         user_id = 1
         product_id = 1
-
+        
         cart_item = ShoppingCarts(
             user_id=user_id,
             product_id=product_id,
@@ -218,7 +215,7 @@ class TestUpdateCartItem:
         user_id = 1
         product_id = 1
         new_quantity = 5
-
+        
         cart_item = ShoppingCarts(
             user_id=user_id,
             product_id=product_id,
@@ -227,7 +224,7 @@ class TestUpdateCartItem:
         )
         test_db_session.add(cart_item)
         await test_db_session.commit()
-
+        
         mocker.patch(
             'app.services.cart_service.get_product',
             new=mocker.AsyncMock(return_value={
@@ -277,7 +274,7 @@ class TestUpdateCartItem:
         """Тест обновления несуществующего товара"""
         user_id = 1
         product_id = 999
-
+        
         mocker.patch(
             'app.services.cart_service.get_product',
             new=mocker.AsyncMock(return_value={
@@ -307,7 +304,7 @@ class TestClearCart:
     ):
         """Тест успешной очистки корзины"""
         user_id = 1
-
+        
         cart_item1 = ShoppingCarts(
             user_id=user_id,
             product_id=1,

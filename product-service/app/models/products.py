@@ -14,7 +14,7 @@ class Products(Base):
     description: Mapped[str] = mapped_column()
     price: Mapped[int] = mapped_column()
     product_quantity: Mapped[int] = mapped_column()
-    image: Mapped[Optional[int]]
+    image: Mapped[Optional[str]] = mapped_column(nullable=True)
     features: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB)
     category_id: Mapped[int] = mapped_column()
 
