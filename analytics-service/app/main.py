@@ -24,13 +24,15 @@ async def lifespan(app: FastAPI):
     await close_clickhouse_client()
 
 
-# sentry_sdk.init(
-#     dsn=settings.SENTRY_URL,
-#     traces_sample_rate=1.0,
-#     _experiments={
-#         "continuous_profiling_auto_start": True,
-#     },
-# )
+sentry_sdk.init(
+    dsn=settings.SENTRY_URL,
+    traces_sample_rate=1.0,
+    _experiments={
+        "continuous_profiling_auto_start": True,
+    },
+)
+sentry_sdk.set_tag("service", "analytics-service")
+
 setup_logging(log_level=settings.LOG_LEVEL, log_file=settings.LOG_FILE)
 
 app = FastAPI(lifespan=lifespan)

@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    SENTRY_URL: str
 
     KAFKA_HOST: str
     KAFKA_INTERNAL_PORT: int
