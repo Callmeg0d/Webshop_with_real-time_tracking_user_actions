@@ -2,9 +2,10 @@ import pytest
 from httpx import AsyncClient
 from datetime import date
 
+from app.constants import OrderStatus
 from app.models.orders import Orders
 from app.repositories.orders_repository import OrdersRepository
-from app.constants import ORDER_STATUS_PENDING, ORDER_STATUS_CONFIRMED
+
 
 
 class TestCreateOrder:
@@ -91,7 +92,7 @@ class TestGetUserOrders:
         order1 = Orders(
             user_id=user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_CONFIRMED,
+            status=OrderStatus.CONFIRMED,
             delivery_address="Address 1",
             order_items=[{"product_id": 1, "quantity": 2}],
             total_cost=2000
@@ -153,7 +154,7 @@ class TestGetUserOrders:
         order = Orders(
             user_id=other_user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_CONFIRMED,
+            status=OrderStatus.CONFIRMED,
             delivery_address="Address",
             order_items=[{"product_id": 1, "quantity": 1}],
             total_cost=1000

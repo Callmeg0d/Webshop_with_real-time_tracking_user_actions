@@ -1,10 +1,11 @@
 import pytest
 from datetime import date
 
+from app.constants import OrderStatus
 from app.domain.entities.orders import OrderItem
 from app.services.order_service import OrderService
 from app.schemas.orders import SCartItemForOrder
-from app.constants import ORDER_STATUS_PENDING, ORDER_STATUS_CONFIRMED, ORDER_STATUS_FAILED
+
 
 
 class TestOrderServiceCreateOrder:
@@ -93,7 +94,7 @@ class TestOrderServiceCreateOrder:
             order_id=1,
             user_id=user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_PENDING,
+            status=OrderStatus.PENDING,
             delivery_address="Test Address",
             order_items=[{"product_id": 1, "quantity": 2}, {"product_id": 2, "quantity": 1}],
             total_cost=3500
@@ -107,7 +108,7 @@ class TestOrderServiceCreateOrder:
         assert result.order_id == 1
         assert result.user_id == user_id
         assert result.total_cost == 3500
-        assert result.status == ORDER_STATUS_PENDING
+        assert result.status == OrderStatus.PENDING
         
         mock_validator.validate_order.assert_called_once()
         mock_repository.create_order.assert_called_once()
@@ -180,7 +181,7 @@ class TestOrderServiceGetUserOrders:
                 order_id=2,
                 user_id=user_id,
                 created_at=date.today(),
-                status=ORDER_STATUS_PENDING,
+                status=OrderStatus.PENDING,
                 delivery_address="Address 2",
                 order_items=[{"product_id": 2, "quantity": 1}],
                 total_cost=1500
@@ -286,7 +287,7 @@ class TestOrderServiceConfirmOrder:
             order_id=order_id,
             user_id=user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_PENDING,
+            status=OrderStatus.PENDING,
             delivery_address="Test Address",
             order_items=[{"product_id": 1, "quantity": 2}],
             total_cost=2000
@@ -413,7 +414,7 @@ class TestOrderServiceFailOrder:
             order_id=order_id,
             user_id=user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_PENDING,
+            status=OrderStatus.PENDING,
             delivery_address="Test Address",
             order_items=[
                 {"product_id": 1, "quantity": 2},
@@ -435,7 +436,7 @@ class TestOrderServiceFailOrder:
         
         await order_service.fail_order(order_id, reason)
         
-        mock_repository.update_order_status.assert_called_once_with(order_id, ORDER_STATUS_FAILED)
+        mock_repository.update_order_status.assert_called_once_with(order_id, OrderStatus.FAILED)
         mock_uow_factory.create.assert_called_once()
     
     @pytest.mark.asyncio
@@ -452,7 +453,7 @@ class TestOrderServiceFailOrder:
             order_id=order_id,
             user_id=1,
             created_at=date.today(),
-            status=ORDER_STATUS_FAILED,
+            status=OrderStatus.FAILED,
             delivery_address="Test Address",
             order_items=[{"product_id": 1, "quantity": 2}],
             total_cost=2000

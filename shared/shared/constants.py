@@ -19,6 +19,28 @@ class HttpHeaders(str, Enum):
     X_USER_ID = "X-User-Id"
 
 
+class SagaIdempotencyKey:
+    """Типы ключей идемпотентности для саги."""
+    ORDER_PROCESSING: Final[str] = "order_processing"
+    COMPENSATION_BALANCE: Final[str] = "compensation_balance"
+    COMPENSATION_STOCK: Final[str] = "compensation_stock"
+
+
+class ReserveBalanceResult(str, Enum):
+    """Результат резервации баланса в саге."""
+    ALREADY_DONE = "already_done"
+    SUCCESS = "success"
+    USER_NOT_FOUND = "user_not_found"
+    INSUFFICIENT_BALANCE = "insufficient_balance"
+
+
+class ReserveStockResult(str, Enum):
+    """Результат резервации остатков в саге."""
+    ALREADY_DONE = "already_done"
+    SUCCESS = "success"
+    INSUFFICIENT_STOCK = "insufficient_stock"
+
+
 # Тестовые константы
 DEFAULT_TEST_USER_ID: Final[int] = 1
 

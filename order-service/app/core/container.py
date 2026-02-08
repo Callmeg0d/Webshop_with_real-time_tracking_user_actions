@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.unit_of_work_factory import UnitOfWorkFactory
 from app.repositories.orders_repository import OrdersRepository
+from app.repositories.saga_reservation_repository import SagaReservationRepository
 from app.services.order_service import OrderService
 from app.services.order_validator import OrderValidator
 from app.services.payment_service import PaymentService
@@ -16,6 +17,11 @@ class Container(containers.DeclarativeContainer):
 
     orders_repository = providers.Factory(
         OrdersRepository,
+        db=db
+    )
+
+    saga_reservation_repository = providers.Factory(
+        SagaReservationRepository,
         db=db
     )
 

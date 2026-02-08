@@ -1,5 +1,9 @@
-# Статусы заказа
-ORDER_STATUS_PENDING = "Pending"
-ORDER_STATUS_CONFIRMED = "Confirmed"
-ORDER_STATUS_FAILED = "Failed"
-ORDER_STATUS_ARRIVING = "Arriving"
+from typing import Final
+
+
+class OrderStatus:
+    """Статусы заказа."""
+    PENDING: Final[str] = "Pending"
+    CONFIRMED: Final[str] = "Confirmed"
+    FAILED: Final[str] = "Failed"
+    ARRIVING: Final[str] = "Arriving"
