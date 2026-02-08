@@ -2,6 +2,7 @@ from datetime import datetime
 
 from shared import get_logger
 
+from app.constants import OrderStatus
 from app.domain.entities.orders import OrderItem
 from app.domain.interfaces.orders_repo import IOrdersRepository
 from app.domain.interfaces.unit_of_work import IUnitOfWorkFactory
@@ -18,7 +19,7 @@ from app.messaging.publisher import (
     publish_stock_increase,
     publish_balance_increase
 )
-from app.constants import ORDER_STATUS_PENDING, ORDER_STATUS_CONFIRMED, ORDER_STATUS_FAILED
+
 
 logger = get_logger(__name__)
 
@@ -85,12 +86,12 @@ class OrderService:
         try:
             # Идемпотентность: проверяем статус перед подтверждением
             order = await self.orders_repository.get_order_by_id(order_id)
-            if not order or order.status != ORDER_STATUS_PENDING:
+            if not order or order.status != OrderStatus.PENDING:
                 logger.debug(f"Order {order_id} cannot be confirmed (status: {order.status if order else 'not found'})")
                 return
             
             async with self.uow_factory.create():
-                await self.orders_repository.update_order_status(order_id, ORDER_STATUS_CONFIRMED)
+                await self.orders_repository.update_order_status(order_id, OrderStatus.CONFIRMED)
             
             # Получаем заказ для публикации события
             order = await self.orders_repository.get_order_by_id(order_id)
@@ -126,12 +127,12 @@ class OrderService:
         try:
             # Идемпотентность: проверяем статус перед отменой
             order = await self.orders_repository.get_order_by_id(order_id)
-            if not order or order.status != ORDER_STATUS_PENDING:
+            if not order or order.status != OrderStatus.PENDING:
                 logger.debug(f"Order {order_id} cannot be failed (status: {order.status if order else 'not found'})")
                 return
             
             async with self.uow_factory.create():
-                await self.orders_repository.update_order_status(order_id, ORDER_STATUS_FAILED)
+                await self.orders_repository.update_order_status(order_id, OrderStatus.FAILED)
             
             # Компенсирующие действия - возврат ресурсов
             if order:
@@ -163,7 +164,7 @@ class OrderService:
         return OrderItem(
             user_id=user_id,
             created_at=datetime.now().date(),
-            status=ORDER_STATUS_PENDING,
+            status=OrderStatus.PENDING,
             delivery_address=delivery_address or "",
             order_items=order_items,
             total_cost=total_cost
