@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     MODE: Literal["DEV", "TEST", "PROD"]
+    SENTRY_URL: str
 
     DB_HOST: str
     DB_INTERNAL_PORT: int

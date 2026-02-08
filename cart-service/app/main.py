@@ -22,13 +22,15 @@ async def lifespan(app: FastAPI):
     await broker.stop()
 
 
-# sentry_sdk.init(
-#     dsn=settings.SENTRY_URL,
-#     traces_sample_rate=1.0,
-#     _experiments={
-#         "continuous_profiling_auto_start": True,
-#     },
-# )
+sentry_sdk.init(
+    dsn=settings.SENTRY_URL,
+    traces_sample_rate=1.0,
+    _experiments={
+        "continuous_profiling_auto_start": True,
+    },
+)
+sentry_sdk.set_tag("service", "cart-service")
+
 setup_logging(log_level=settings.LOG_LEVEL, log_file=settings.LOG_FILE)
 
 app = FastAPI(lifespan=lifespan)
@@ -42,3 +44,6 @@ instrumentator = Instrumentator(
 instrumentator.instrument(app)
 instrumentator.expose(app)
 
+@app.get("/sentry-debug")
+async def trigger_error():
+    division_by_zero = 1 / 0

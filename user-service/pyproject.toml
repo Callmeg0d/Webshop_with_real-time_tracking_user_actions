@@ -23,7 +23,7 @@ faststream = {extras = ["kafka"], version = "^0.6.3"}
 redis = "4.6.0"
 dependency-injector = "^4.48.3"
 prometheus-fastapi-instrumentator = "7.0.2"
-sentry-sdk = "2.23.1"
+sentry-sdk = {extras = ["fastapi"], version = "^2.51.0"}
 shared = {path = "../shared", develop = true}
 
 [build-system]
