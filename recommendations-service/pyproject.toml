@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "recommendations-service"
+version = "0.1.0"
+description = "Recommendations service"
+authors = ["Egor Muratov <egor.muratov.27@mail.ru>"]
+package-mode = false
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+qdrant-client = ">=1.16.2,<2.0.0"
+snowballstemmer = ">=2.2.0,<3.0.0"
+langchain = ">=1.2.10,<2.0.0"
+langchain-huggingface = ">=1.2.0,<2.0.0"
+sentence-transformers = ">=3.0.0,<4.0.0"
+langchain-openai = ">=0.2.0,<1.0.0"
+httpx = "^0.28.1"
+shared = {path = "../shared", develop = true}
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
