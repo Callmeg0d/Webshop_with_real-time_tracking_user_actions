@@ -1,0 +1,81 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: recommendation-qdrant
+    ports:
+      - "${QDRANT_EXTERNAL_PORT}:${QDRANT_INTERNAL_PORT}"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - recommendations-internal
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: recommendation-service-kafka
+    ports:
+      - "${KAFKA_EXTERNAL_PORT}:${KAFKA_INTERNAL_PORT}"
+    networks:
+      - recommendations-internal
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - recommendations-internal
+    command: >
+      sh -c "
+      sleep 10 &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic product_created &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic product_updated &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic product_removed &&
+      echo 'Kafka topics created'
+      "
+
+  recommendation-service:
+    build:
+      context: ..
+      dockerfile: recommendations-service/Dockerfile
+    image: recommendation-service:latest
+    container_name: recommendation_service
+    env_file:
+      - .env
+    environment:
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
+    ports:
+      - "${RECOMMENDATION_EXTERNAL_PORT}:${RECOMMENDATION_INTERNAL_PORT}"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      qdrant:
+        condition: service_started
+      kafka:
+        condition: service_started
+      kafka-init:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - recommendations-internal
+      - diploma_network
+
+networks:
+  recommendations-internal:
+    driver: bridge
+  diploma_network:
+    external: true
+
+volumes:
+  qdrant_storage:
