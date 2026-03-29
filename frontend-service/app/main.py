@@ -9,6 +9,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from shared import setup_logging
 
 from app.config import settings
+from app.api.cart_api import router as router_cart_api
 from app.api.pages import router as router_pages
 from app.api.gateway import router as router_gateway
 
@@ -27,13 +28,14 @@ sentry_sdk.init(
 )
 sentry_sdk.set_tag("service", "frontend-service")
 
-setup_logging(log_level=settings.LOG_LEVEL, log_file=settings.LOG_FILE)
+setup_logging(log_level=settings.LOG_LEVEL)
 
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(router_pages)
+app.include_router(router_cart_api)
 app.include_router(router_gateway)
 
 # CORS для фронтенда

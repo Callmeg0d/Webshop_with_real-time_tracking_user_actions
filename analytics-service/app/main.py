@@ -33,7 +33,7 @@ sentry_sdk.init(
 )
 sentry_sdk.set_tag("service", "analytics-service")
 
-setup_logging(log_level=settings.LOG_LEVEL, log_file=settings.LOG_FILE)
+setup_logging(log_level=settings.LOG_LEVEL)
 
 app = FastAPI(lifespan=lifespan)
 
