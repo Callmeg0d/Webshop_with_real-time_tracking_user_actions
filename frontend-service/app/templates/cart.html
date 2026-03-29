@@ -13,8 +13,8 @@
              data-product-name="{{ item.name }}"
              data-price="{{ item.price }}"
              data-quantity="{{ item.quantity }}">
-            <img src="/static/images/{{ item.product_id }}.webp"
-                 alt="Фото товара"
+            <img src="/static/images/{{ item.image or item.product_id }}.webp"
+                 alt="{{ item.name }}"
                  class="w-full h-40 object-contain rounded-md">
 
             <div class="text-center mt-2">
@@ -62,6 +62,11 @@
     {% else %}
     <p class="text-center text-lg text-gray-600">Ваша корзина ещё пуста, для оформления заказа добавьте товары</p>
     {% endif %}
+
+    <section id="session-recommendations-section" class="mt-12 pt-8 border-t border-gray-200" style="display: none;">
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Вам может понравиться</h2>
+        <div id="session-recommendations-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"></div>
+    </section>
 </div>
 
 <div id="orderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
@@ -249,11 +254,46 @@
         }
     }
 
+    // Рекомендации по товарам, добавленным в корзину в этой сессии (sessionStorage)
+    async function loadSessionRecommendations() {
+        const section = document.getElementById("session-recommendations-section");
+        const grid = document.getElementById("session-recommendations-grid");
+        if (!section || !grid) return;
+        try {
+            const raw = sessionStorage.getItem("cart_session_adds");
+            const ids = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(ids) || ids.length === 0) return;
+            const response = await (window.authFetch || fetch)("/api/cart/cart/session-recommendations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ product_ids: ids })
+            });
+            if (!response.ok) return;
+            const list = await response.json();
+            if (!Array.isArray(list) || list.length === 0) return;
+            grid.innerHTML = list.map(function(rec) {
+                const img = rec.image ? rec.image : rec.product_id;
+                return '<div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col">' +
+                    '<div class="w-full h-40 bg-gray-100 flex items-center justify-center p-2">' +
+                    '<img src="/static/images/' + img + '.webp" alt="' + (rec.name || '').replace(/"/g, '&quot;') + '" class="max-h-full max-w-full object-contain">' +
+                    '</div>' +
+                    '<div class="p-4 flex flex-col flex-1">' +
+                    '<h3 class="font-semibold text-gray-800 mb-2 line-clamp-2">' + (rec.name || '') + '</h3>' +
+                    '<p class="text-lg font-semibold text-green-600 mb-4">' + (rec.price || 0) + ' ₽</p>' +
+                    '<a href="/product/' + rec.product_id + '" class="mt-auto text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors">Подробнее</a>' +
+                    '</div></div>';
+            }).join("");
+            section.style.display = "block";
+        } catch (e) {
+            console.error("Session recommendations load error:", e);
+        }
+    }
+
     // Закрытие модального окна при клике на затемнённый фон
     document.addEventListener("DOMContentLoaded", function() {
-        // Загружаем баланс при загрузке страницы
         loadBalance();
-        
+        loadSessionRecommendations();
+
         const modal = document.getElementById("orderModal");
         const modalBackdrop = document.getElementById("modalBackdrop");
         

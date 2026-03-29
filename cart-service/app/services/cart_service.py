@@ -178,7 +178,8 @@ class CartService:
                         price=product["price"],
                         quantity=item.quantity,
                         total_cost=item.total_cost,
-                        product_quantity=product["product_quantity"]
+                        product_quantity=product["product_quantity"],
+                        image=product.get("image"),
                     ))
                 except Exception as e:
                     # Если продукт не найден, пропускаем его

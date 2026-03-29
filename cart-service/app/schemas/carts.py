@@ -25,6 +25,7 @@ class SCartItemWithProduct(BaseModel):
     quantity: int
     total_cost: int
     product_quantity: int
+    image: str | None = None  # имя файла без расширения для /static/images/{image}.webp
 
     model_config = ConfigDict(from_attributes=True)
 
