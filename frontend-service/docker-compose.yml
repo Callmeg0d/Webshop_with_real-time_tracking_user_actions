@@ -17,6 +17,6 @@ services:
 
 networks:
   diploma_network:
-    external: true
+    name: diploma_network
 
 

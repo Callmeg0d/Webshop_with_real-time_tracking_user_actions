@@ -89,7 +89,7 @@ services:
 
 networks:
   diploma_network:
-    external: true
+    name: diploma_network
 
 volumes:
   user_postgresdata:
