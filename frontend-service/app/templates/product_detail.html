@@ -144,6 +144,98 @@
         background-color: #0056b3;
     }
 
+    .recommendations-section {
+        margin-top: 40px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .recommendations-section h2 {
+        margin-bottom: 20px;
+        text-align: center;
+        color: #333;
+    }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+    }
+
+    .recommendation-card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .recommendation-card-thumb {
+        width: 100%;
+        height: 160px;
+        background-color: #f3f4f6;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    .recommendation-card-thumb img {
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .recommendation-card-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .recommendation-card-price {
+        font-size: 18px;
+        font-weight: 600;
+        color: #28a745;
+        margin-bottom: 10px;
+    }
+
+    .recommendation-card-actions {
+        margin-top: auto;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .recommendation-card-actions a {
+        flex: 1;
+        text-align: center;
+        padding: 8px 10px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .btn-outline {
+        border: 1px solid #007bff;
+        color: #007bff;
+        background-color: #fff;
+    }
+
+    .btn-outline:hover {
+        background-color: #007bff;
+        color: #fff;
+    }
+
     /* Анимация появления модального окна */
     @keyframes modalAppear {
         from {
@@ -200,6 +292,30 @@
         </div>
     </div>
 </div>
+
+{% if recommendations and recommendations|length > 0 %}
+<div class="recommendations-section">
+    <h2>Похожие товары</h2>
+    <div class="recommendations-grid">
+        {% for rec in recommendations %}
+        <div class="recommendation-card">
+            {% if rec.image %}
+            <div class="recommendation-card-thumb">
+                <img src="/static/images/{{ rec.image }}.webp" alt="{{ rec.name }}">
+            </div>
+            {% endif %}
+            <div class="recommendation-card-title">{{ rec.name }}</div>
+            <div class="recommendation-card-price">{{ rec.price }} ₽</div>
+            <div class="recommendation-card-actions">
+                <a href="/product/{{ rec.product_id }}" class="btn-outline">
+                    Подробнее
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <div class="reviews-section">
     <h2>Отзывы</h2>
@@ -343,14 +459,23 @@
                     });
 
                     if (response.ok) {
-                        // Обновляем индикатор корзины
+                        // Товары, добавленные в этой вкладке — для рекомендаций на странице корзины
+                        try {
+                            const key = 'cart_session_adds';
+                            const raw = sessionStorage.getItem(key);
+                            const ids = raw ? JSON.parse(raw) : [];
+                            if (!ids.includes(parseInt(productId, 10))) ids.push(parseInt(productId, 10));
+                            sessionStorage.setItem(key, JSON.stringify(ids));
+                        } catch (e) { /* ignore */ }
                         if (typeof updateCartBadge === 'function') {
                             await updateCartBadge();
                         }
                     } else {
                         const errorData = await response.json().catch(() => ({ detail: "Не удалось добавить товар в корзину" }));
                         console.error("Ошибка:", errorData);
-                        alert(errorData.detail || "Не удалось добавить товар в корзину");
+                        const d = errorData.detail;
+                        const msg = typeof d === "string" ? d : (Array.isArray(d) ? d.map((e) => e.msg || e.loc?.join(" ") || JSON.stringify(e)).join("; ") : (d ? JSON.stringify(d) : "Не удалось добавить товар в корзину"));
+                        alert(msg || "Не удалось добавить товар в корзину");
                     }
                 } catch (error) {
                     console.error("Ошибка запроса:", error);
