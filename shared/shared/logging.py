@@ -1,16 +1,13 @@
 import logging
 import sys
-from pathlib import Path
-from typing import Optional
 
 
-def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> None:
+def setup_logging(log_level: str = "INFO") -> None:
     """
     Настраивает логирование для приложения.
 
     Args:
         log_level: Уровень логирования (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        log_file: Путь к файлу для записи логов
     """
     log_format = "[%(asctime)s.%(msecs)03d] %(module)10s:%(lineno)-3d %(levelname)-7s - %(message)s"
     date_format = "%Y-%m-%d %H:%M:%S"
@@ -25,17 +22,6 @@ def setup_logging(log_level: str = "INFO", log_file: Optional[str] = None) -> No
     console_formatter = logging.Formatter(log_format, date_format)
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
-
-    # File handler (если указан файл)
-    if log_file:
-        log_path = Path(log_file)
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-
-        file_handler = logging.FileHandler(log_path, encoding="utf-8")
-        file_handler.setLevel(logging.DEBUG)
-        file_formatter = logging.Formatter(log_format, date_format)
-        file_handler.setFormatter(file_formatter)
-        root_logger.addHandler(file_handler)
 
     # Настройка уровней для сторонних библиотек
     logging.getLogger("uvicorn").setLevel(logging.INFO)

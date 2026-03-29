@@ -6,6 +6,7 @@ class HttpTimeout(float, Enum):
     """Таймауты для HTTP клиентов."""
     DEFAULT = 5.0
     GATEWAY = 10.0
+    RECOMMENDATIONS = 20.0
 
 
 class AnonymousUser:
