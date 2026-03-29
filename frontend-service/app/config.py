@@ -13,13 +13,13 @@ class Settings(BaseSettings):
     ORDER_SERVICE_URL: str
     REVIEW_SERVICE_URL: str
     ANALYTICS_SERVICE_URL: str
+    RECOMMENDATIONS_SERVICE_URL: str
 
     # Для аутентификации через cookies
     SECRET_KEY: str
     ALGORITHM: str
 
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

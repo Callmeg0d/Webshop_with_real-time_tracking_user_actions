@@ -22,7 +22,6 @@ class Settings(BaseSettings):
     GRAFANA_EXTERNAL_PORT: int
 
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

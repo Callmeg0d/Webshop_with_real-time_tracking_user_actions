@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     KAFKA_INTERNAL_PORT: int
 
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: Optional[str] = None
 
     @property
     def DATABASE_URL(self):
