@@ -1,18 +1,27 @@
 from math import ceil
 
 from fastapi import APIRouter, Depends, Request, Form
+from shared import get_logger
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from app.services.user_client import get_current_user, login_user, register_user
-from app.services.product_client import get_all_products, get_product, get_products_count
+from app.services.product_client import (
+    get_all_products,
+    get_product,
+    get_products_count,
+)
 from app.services.cart_client import get_cart
 from app.services.review_client import get_reviews
+from app.services.recommend_client import (
+    get_recommendations_for_product,
+    get_recommendations_for_session,
+)
 
 router = APIRouter(
     tags=["Фронтенд"]
 )
-
+logger = get_logger(__name__)
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -102,12 +111,16 @@ async def get_cart_page(request: Request):
 
     cart_items = await get_cart(user["id"])
     total_cart_cost = sum(item.get("total_cost", 0) for item in cart_items)
+
+    # Рекомендации «Вам может понравиться» считаются по товарам, добавленным в этой сессии
+    # (список id хранится в sessionStorage), блок подгружается JS через POST /api/cart/cart/session-recommendations
     return templates.TemplateResponse(
         "cart.html",
         {
             "request": request,
             "cart_items": cart_items,
             "total_cart_cost": total_cart_cost,
+            "session_recommendations": [],
         },
     )
 
@@ -119,11 +132,16 @@ async def get_product_detail_page(
 ):
     product = await get_product(product_id)
     reviews = await get_reviews(product_id)
-    return templates.TemplateResponse("product_detail.html", {
-        "request": request,
-        "product": product,
-        "reviews": reviews
-    })
+    recommendations = await get_recommendations_for_product(product, limit=4)
+    return templates.TemplateResponse(
+        "product_detail.html",
+        {
+            "request": request,
+            "product": product,
+            "reviews": reviews,
+            "recommendations": recommendations,
+        },
+    )
 
 
 @router.get("/profile")
