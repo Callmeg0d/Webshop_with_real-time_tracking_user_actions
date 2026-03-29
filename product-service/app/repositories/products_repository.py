@@ -1,7 +1,7 @@
-from sqlalchemy import select, update, asc, desc, func
+from sqlalchemy import select, update, asc, desc, func, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.products import SortEnum, Pagination
+from app.schemas.products import SortEnum, Pagination, SProductCreate, SProductUpdate
 from app.domain.entities.product import ProductItem
 from app.domain.mappers.product import ProductMapper
 from app.models import Products
@@ -15,7 +15,7 @@ class ProductsRepository:
     между entities и ORM моделями.
     """
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession) -> None:
         """
         Инициализация репозитория товаров.
 
@@ -25,7 +25,7 @@ class ProductsRepository:
         self.db = db
         self.mapper = ProductMapper()
 
-    async def get_stock_by_ids(self, product_ids: list[int]) -> dict:
+    async def get_stock_by_ids(self, product_ids: list[int]) -> dict[int, int]:
         """
         Получает количество товаров на складе по списку ID.
 
@@ -104,6 +104,20 @@ class ProductsRepository:
         orm_product = result.scalar_one_or_none()
         return self.mapper.to_entity(orm_product) if orm_product else None
 
+    async def get_products_by_ids(self, product_ids: list[int]) -> list[ProductItem]:
+        """Возвращает список товаров по списку ID (порядок не гарантируется)."""
+        if not product_ids:
+            return []
+        result = await self.db.execute(
+            select(Products).where(Products.product_id.in_(product_ids))
+        )
+        orm_models = list(result.scalars().all())
+        return [
+            self.mapper.to_entity(orm_model)
+            for orm_model in orm_models
+            if orm_model is not None
+        ]
+
     async def count_products(self) -> int:
         result = await self.db.execute(select(func.count(Products.product_id)))
         return int(result.scalar_one())
@@ -125,4 +139,32 @@ class ProductsRepository:
             for orm_model in orm_models
             if orm_model is not None
         ]
+
+    async def add_product(self, product: SProductCreate) -> ProductItem:
+        payload = product.model_dump(exclude_none=True)
+        result = await self.db.execute(
+            insert(Products).values(**payload).returning(Products)
+        )
+        row = result.scalar_one()
+        return self.mapper.to_entity(row)
+
+    async def update_product(self, product_id: int, data: SProductUpdate) -> ProductItem | None:
+        payload = data.model_dump(exclude_none=True)
+        if not payload:
+            return await self.get_product_by_id(product_id)
+        result = await self.db.execute(
+            update(Products)
+            .where(Products.product_id == product_id)
+            .values(**payload)
+            .returning(Products)
+        )
+        row = result.scalar_one_or_none()
+        return self.mapper.to_entity(row) if row else None
+
+    async def delete_product(self, product_id: int) -> ProductItem | None:
+        result = await self.db.execute(
+            delete(Products).where(Products.product_id == product_id).returning(Products)
+        )
+        row = result.scalar_one_or_none()
+        return self.mapper.to_entity(row) if row else None
 

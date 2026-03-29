@@ -79,6 +79,21 @@ async def get_product(product_id: int) -> dict:
                 product["category_name"] = ""
         else:
             product["category_name"] = ""
-        
+
         return product
+
+
+async def get_products_by_ids(product_ids: list[int]) -> list[dict]:
+    """Получает товары по списку ID (для рекомендаций по просмотренным за сессию)"""
+    if not product_ids:
+        return []
+    ids = product_ids[:50]
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{settings.PRODUCT_SERVICE_URL}/products/by_ids",
+            params={"ids": ids},
+            timeout=HttpTimeout.DEFAULT.value,
+        )
+        response.raise_for_status()
+        return response.json()
 
