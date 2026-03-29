@@ -29,9 +29,11 @@ async def get_reviews(product_id: int) -> list[dict]:
         )
         return []
     except httpx.RequestError as e:
-        logger.error(
-            f"Ошибка подключения к review-service для продукта {product_id}: {e}",
-            exc_info=True
+        logger.warning(
+            "Review-service недоступен для продукта %s (%s): %s",
+            product_id,
+            settings.REVIEW_SERVICE_URL,
+            e,
         )
         return []
     except httpx.HTTPStatusError as e:
