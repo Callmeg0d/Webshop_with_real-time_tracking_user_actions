@@ -14,7 +14,6 @@ email-validator = "^2.0.0"
 python-jose = {version = "3.3.0", extras = ["cryptography"]}
 bcrypt = "4.2.1"
 passlib = "1.7.4"
-redis = "4.6.0"
 dependency-injector = "^4.48.3"
 shared = {path = "../shared", develop = true}
 
