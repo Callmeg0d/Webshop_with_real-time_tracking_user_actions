@@ -9,6 +9,13 @@ packages = [{include = "shared"}]
 python = "^3.12"
 fastapi = "0.115.6"
 sqlalchemy = "2.0.36"
+pydantic = "2.10.4"
+pydantic-settings = "2.7.1"
+uvicorn = "0.34.0"
+gunicorn = "23.0.0"
+faststream = {extras = ["kafka"], version = "^0.6.3"}
+prometheus-fastapi-instrumentator = "7.0.2"
+sentry-sdk = {extras = ["fastapi"], version = "^2.51.0"}
 
 [build-system]
 requires = ["poetry-core"]
