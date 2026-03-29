@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional
 
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -15,6 +15,6 @@ class Products(Base):
     price: Mapped[int] = mapped_column()
     product_quantity: Mapped[int] = mapped_column()
     image: Mapped[Optional[str]] = mapped_column(nullable=True)
-    features: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB)
+    features: Mapped[Optional[dict[str, str]]] = mapped_column(JSONB)
     category_id: Mapped[int] = mapped_column()
 
