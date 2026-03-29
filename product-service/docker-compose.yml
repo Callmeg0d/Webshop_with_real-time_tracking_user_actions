@@ -47,6 +47,9 @@ services:
       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic stock_reserved &&
       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic stock_reservation_failed &&
       kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic stock_increase &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic product_created &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic product_removed &&
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 --partitions 3 --replication-factor 1 --topic product_updated &&
       echo 'Kafka topics created'
       "
 
@@ -80,7 +83,7 @@ services:
 
 networks:
   diploma_network:
-    external: true
+    name: diploma_network
 
 volumes:
   product_postgresdata:
