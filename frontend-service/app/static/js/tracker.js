@@ -71,6 +71,9 @@
                 sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                 sessionStorage.setItem('tracker_session_id', sessionId);
             }
+            // Всегда синхронизируем cookie с текущей сессией (бэкенд читает для рекомендаций по просмотренным)
+            const maxAge = 24 * 60 * 60;
+            document.cookie = `tracker_session_id=${encodeURIComponent(sessionId)}; path=/; max-age=${maxAge}; SameSite=Lax`;
             return sessionId;
         }
 
