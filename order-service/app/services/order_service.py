@@ -14,10 +14,11 @@ from app.services.payment_service import PaymentService
 from app.services.order_notification_service import OrderNotificationService
 from app.services.user_client import get_user_delivery_address
 from app.messaging.publisher import (
+    publish_order_created,
     publish_order_processing_started,
     publish_order_confirmed,
     publish_stock_increase,
-    publish_balance_increase
+    publish_balance_increase,
 )
 
 
@@ -60,6 +61,22 @@ class OrderService:
                 order_data = await self._prepare_order_data(user_id, cart_items, total_cost)
                 order = await self.orders_repository.create_order(order_data)
                 logger.info(f"Order {order.order_id} created successfully")
+
+            order_created_payload = {
+                "order_id": order.order_id,
+                "user_id": order.user_id,
+                "created_at": (
+                    order.created_at.isoformat()
+                    if hasattr(order.created_at, "isoformat")
+                    else str(order.created_at)
+                ),
+                "status": order.status,
+                "delivery_address": order.delivery_address,
+                "order_items": order.order_items,
+                "total_cost": order.total_cost,
+            }
+            await publish_order_created(order_created_payload)
+            logger.info(f"Order created event published for analytics, order {order.order_id}")
 
             # Публикуем событие начала обработки заказа (Saga)
             await publish_order_processing_started({
