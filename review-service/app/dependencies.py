@@ -1,8 +1,9 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.container import Container
 from app.database import async_session_maker
+from app.services.product_client import ensure_product_exists
 from app.services.review_service import ReviewService
 from shared import create_get_db
 
@@ -14,20 +15,18 @@ get_db = create_get_db(async_session_maker)
 
 async def check_product_exists(product_id: int) -> int:
     """
-    Проверяет существование продукта
-    
+    Проверяет существование продукта через product-service.
+
     Args:
         product_id: ID продукта
-        
+
     Returns:
         product_id если продукт существует
-        
+
     Raises:
-        HTTPException: 404 если продукт не найден
+        HTTPException: 404 если продукт не найден; 502/503 при сбое каталога
     """
-    # TODO: В prod добавить вызов product-service
-    # Пока всегда возвращаем успех
-    return product_id
+    return await ensure_product_exists(product_id)
 
 
 async def get_reviews_service(

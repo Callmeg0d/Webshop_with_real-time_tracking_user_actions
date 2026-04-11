@@ -1,7 +1,9 @@
 from sqlalchemy import select, delete, func, update
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.carts import ShoppingCarts
+from app.models.processed_order_confirmations import ProcessedOrderConfirmation
 from app.domain.entities.cart import CartItem
 from app.domain.mappers.cart import CartMapper
 from app.schemas.carts import SCartItem
@@ -24,6 +26,21 @@ class CartsRepository:
         """
         self.db = db
         self.mapper = CartMapper()
+
+    async def claim_order_confirmation(self, order_id: int, user_id: int) -> bool:
+        """
+        Резервирует обработку order_confirmed: True, если заказ новый; False при дубликате.
+
+        INSERT ... ON CONFLICT DO NOTHING — идемпотентность между репликами и после рестартов.
+        """
+        stmt = (
+            insert(ProcessedOrderConfirmation)
+            .values(order_id=order_id, user_id=user_id)
+            .on_conflict_do_nothing(index_elements=[ProcessedOrderConfirmation.order_id])
+            .returning(ProcessedOrderConfirmation.order_id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none() is not None
 
     async def clear_cart(self, user_id: int) -> None:
         """
