@@ -86,8 +86,12 @@ class TestOrderServiceCreateOrder:
             return_value="Test Address"
         )
         mocker.patch(
+            'app.services.order_service.publish_order_created',
+            new=mocker.AsyncMock(return_value=None),
+        )
+        mocker.patch(
             'app.services.order_service.publish_order_processing_started',
-            return_value=None
+            new=mocker.AsyncMock(return_value=None),
         )
         
         created_order = OrderItem(
@@ -172,7 +176,7 @@ class TestOrderServiceGetUserOrders:
                 order_id=1,
                 user_id=user_id,
                 created_at=date.today(),
-                status=ORDER_STATUS_CONFIRMED,
+                status=OrderStatus.CONFIRMED,
                 delivery_address="Address 1",
                 order_items=[{"product_id": 1, "quantity": 2}],
                 total_cost=2000
@@ -297,7 +301,7 @@ class TestOrderServiceConfirmOrder:
             order_id=order_id,
             user_id=user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_CONFIRMED,
+            status=OrderStatus.CONFIRMED,
             delivery_address="Test Address",
             order_items=[{"product_id": 1, "quantity": 2}],
             total_cost=2000
@@ -315,7 +319,7 @@ class TestOrderServiceConfirmOrder:
         await order_service.confirm_order(order_id)
         
         mock_repository.get_order_by_id.assert_called()
-        mock_repository.update_order_status.assert_called_once_with(order_id, ORDER_STATUS_CONFIRMED)
+        mock_repository.update_order_status.assert_called_once_with(order_id, OrderStatus.CONFIRMED)
         mock_notification_service.send_order_confirmation.assert_called_once()
         mock_uow_factory.create.assert_called_once()
     
@@ -333,7 +337,7 @@ class TestOrderServiceConfirmOrder:
             order_id=order_id,
             user_id=1,
             created_at=date.today(),
-            status=ORDER_STATUS_CONFIRMED,
+            status=OrderStatus.CONFIRMED,
             delivery_address="Test Address",
             order_items=[{"product_id": 1, "quantity": 2}],
             total_cost=2000
