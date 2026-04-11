@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     DB_NAME: str
 
     USER_SERVICE_URL: str  # URL для вызова user-service
+    PRODUCT_SERVICE_URL: str  # URL для вызова product-service (проверка существования товара)
     KAFKA_HOST: str
     KAFKA_INTERNAL_PORT: int
 

@@ -9,7 +9,7 @@ from alembic import context
 
 from app.database import Base
 # Импортируем все модели для autogenerate
-from app.models import ShoppingCarts  # noqa
+from app.models import ProcessedOrderConfirmation, ShoppingCarts  # noqa
 
 config = context.config
 

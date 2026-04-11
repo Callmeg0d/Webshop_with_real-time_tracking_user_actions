@@ -9,11 +9,6 @@ router = KafkaRouter()
 logger = get_logger(__name__)
 
 
-# Отслеживание обработанных заказов для идемпотентности
-# todo: использовать Redis или БД
-_processed_orders: set[int] = set()
-
-
 @router.subscriber("order_confirmed", group_id="cart_service")
 async def handle_order_confirmed(order: dict) -> None:
     """
@@ -30,20 +25,20 @@ async def handle_order_confirmed(order: dict) -> None:
         return
     
     logger.info(f"Processing order_confirmed event for order {order_id}, user {user_id}")
-    
-    # Идемпотентность: проверяем, был ли уже обработан этот заказ
-    if order_id in _processed_orders:
-        logger.debug(f"Order {order_id} already processed")
-        return
-    
+
     try:
         async with async_session_maker() as session:
             carts_repository = CartsRepository(session)
-            
+
             async with UnitOfWork(session):
+                claimed = await carts_repository.claim_order_confirmation(
+                    order_id=order_id, user_id=user_id
+                )
+                if not claimed:
+                    logger.debug(f"Order {order_id} already processed (idempotent skip)")
+                    return
                 await carts_repository.clear_cart(user_id=user_id)
-                _processed_orders.add(order_id)
-        
+
         logger.info(f"Cart cleared successfully for order {order_id}, user {user_id}")
     except Exception as e:
         logger.error(f"Error processing order_confirmed event for order {order_id}, user {user_id}: {e}", exc_info=True)

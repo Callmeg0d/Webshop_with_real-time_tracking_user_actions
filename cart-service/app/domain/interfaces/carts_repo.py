@@ -6,6 +6,9 @@ from app.schemas.carts import SCartItem
 
 class ICartsRepository(Protocol):
 
+    async def claim_order_confirmation(self, order_id: int, user_id: int) -> bool:
+        ...
+
     async def clear_cart(self, user_id: int) -> None:
         ...
 
