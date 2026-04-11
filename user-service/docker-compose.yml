@@ -15,14 +15,6 @@ services:
       interval: 5s
       retries: 5
 
-  redis:
-    container_name: "user-service-redis"
-    image: redis:7
-    ports:
-      - "${REDIS_EXTERNAL_PORT}:${REDIS_INTERNAL_PORT}"
-    volumes:
-      - user_redisdata:/data
-
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: "user-service-kafka"
