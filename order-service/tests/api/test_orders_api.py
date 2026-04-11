@@ -49,6 +49,10 @@ class TestCreateOrder:
             new=mocker.AsyncMock(return_value=5000)
         )
         mocker.patch(
+            'app.services.order_service.publish_order_created',
+            new=mocker.AsyncMock(return_value=None),
+        )
+        mocker.patch(
             'app.services.order_service.publish_order_processing_started',
             new=mocker.AsyncMock(return_value=None)
         )
@@ -72,7 +76,7 @@ class TestCreateOrder:
         assert order is not None
         assert order.user_id == user_id
         assert order.total_cost == 3500
-        assert order.status == ORDER_STATUS_PENDING
+        assert order.status == OrderStatus.PENDING
     
 
 
@@ -100,7 +104,7 @@ class TestGetUserOrders:
         order2 = Orders(
             user_id=user_id,
             created_at=date.today(),
-            status=ORDER_STATUS_PENDING,
+            status=OrderStatus.PENDING,
             delivery_address="Address 2",
             order_items=[{"product_id": 2, "quantity": 1}],
             total_cost=1500

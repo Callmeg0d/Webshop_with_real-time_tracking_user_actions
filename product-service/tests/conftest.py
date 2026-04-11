@@ -10,6 +10,8 @@ from app.main import app
 from app.database import Base
 from app.dependencies import get_db
 from app.config import settings
+from app.models import Categories, IdempotencyKey, Products  # noqa: F401 — регистрация таблиц в metadata
+
 
 pytest_plugins = ["shared.test_utils.conftest"]
 
@@ -19,11 +21,12 @@ _db_initialized = False
 
 @pytest.fixture(scope="session", autouse=True)
 async def _setup_test_db():
-    """Создает таблицы один раз на сессию тестов"""
+    """Пересоздаёт схему под текущие модели (create_all не меняет типы уже существующих колонок)."""
     global _db_initialized
     if not _db_initialized:
         engine = create_async_engine(settings.TEST_DATABASE_URL, echo=False)
         async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
             await conn.run_sync(Base.metadata.create_all)
         await engine.dispose()
         _db_initialized = True
