@@ -60,8 +60,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
       kafka:
         condition: service_started
       kafka-init:
@@ -85,6 +83,5 @@ networks:
 
 volumes:
   user_postgresdata:
-  user_redisdata:
 
 
