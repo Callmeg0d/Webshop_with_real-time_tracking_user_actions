@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, Body, HTTPException, Query
 from typing import Annotated
 from shared import get_logger
 
-from app.dependencies import get_products_service
-from app.api.dependencies import pagination_params
+from app.dependencies import get_products_service, pagination_params
 from app.schemas.products import Pagination, SProducts, SProductsCount, SProductCreate, SProductUpdate
 from app.schemas.stock import StockUpdateRequest
 from app.services.product_service import ProductService

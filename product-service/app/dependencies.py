@@ -1,10 +1,13 @@
-from fastapi import Depends
+from fastapi import Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from app.core.container import Container
 from app.database import async_session_maker
 from app.services.product_service import ProductService
 from app.services.category_service import CategoryService
+from app.schemas.products import Pagination, SortEnum
+
 from shared import create_get_db
 
 
@@ -42,4 +45,13 @@ async def get_categories_service(
     """
     with container.db.override(db):
         return container.category_service()
+
+
+def pagination_params(
+        page: int = Query(default=1, ge=1, le=50),
+        per_page: int = Query(default=10, ge=1, le=50),
+        order: SortEnum = Query(default=SortEnum.DESC),
+) -> Pagination:
+    return Pagination(page=page, per_page=per_page, order=order)
+
 
