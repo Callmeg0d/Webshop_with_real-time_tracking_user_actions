@@ -96,6 +96,29 @@
 </div>
 
 <script>
+    function formatApiErrorDetail(detail) {
+        if (detail == null || detail === "") return "";
+        if (typeof detail === "string") return detail;
+        if (Array.isArray(detail)) {
+            return detail
+                .map(function (e) {
+                    if (e && typeof e === "object" && e.msg) return e.msg;
+                    return String(e);
+                })
+                .filter(Boolean)
+                .join(" ");
+        }
+        if (typeof detail === "object") {
+            if (detail.msg) return detail.msg;
+            if (detail.message) return detail.message;
+        }
+        try {
+            return JSON.stringify(detail);
+        } catch (e) {
+            return "";
+        }
+    }
+
     async function updateQuantity(productId, change) {
         let input = document.getElementById(`qty-${productId}`);
         let newQuantity = parseInt(input.value) + change;
@@ -138,7 +161,7 @@
                 await updateBalanceHighlight();
             } else {
                 const errorData = await response.json().catch(() => ({ detail: "Ошибка обновления количества товара" }));
-                alert(errorData.detail || "Ошибка обновления количества товара!");
+                alert(formatApiErrorDetail(errorData.detail) || "Ошибка обновления количества товара!");
             }
         } catch (error) {
             console.error("Ошибка при обновлении корзины:", error);
@@ -159,7 +182,7 @@
                 location.reload();
             } else {
                 const errorData = await response.json().catch(() => ({ detail: "Ошибка при удалении товара" }));
-                alert(errorData.detail || "Ошибка при удалении товара!");
+                alert(formatApiErrorDetail(errorData.detail) || "Ошибка при удалении товара!");
             }
         } catch (error) {
             console.error("Ошибка при удалении товара:", error);
@@ -185,13 +208,12 @@
                 await loadBalance();
             } else {
                 const errorData = await response.json().catch(() => ({ detail: "Произошла ошибка при оформлении заказа" }));
-                const errorMessage = errorData.detail || "Произошла ошибка при оформлении заказа";
-                
-                // Специальная обработка ошибки нехватки баланса
+                const errorMessage = formatApiErrorDetail(errorData.detail) || "Произошла ошибка при оформлении заказа";
+
                 if (errorMessage.includes("баланс") || errorMessage.includes("баланса")) {
-                    alert(`❌ ${errorMessage}\n\nПополните баланс в профиле для оформления заказа.`);
+                    alert("❌ " + errorMessage + "\n\nПополните баланс в профиле для оформления заказа.");
                 } else {
-                    alert(`❌ ${errorMessage}`);
+                    alert("❌ " + errorMessage);
                 }
             }
         } catch (error) {
@@ -207,6 +229,19 @@
         modal.setAttribute('data-items-count', itemsCount);
         modal.classList.remove("hidden");
         document.body.style.overflow = "hidden";
+
+        if (window.tracker && typeof window.tracker.track === "function") {
+            window.tracker.track("order_complete", {
+                orderId: String(orderId),
+                totalValue: String(totalCost),
+                itemsCount: String(itemsCount),
+                currency: "RUB",
+                paymentMethod: "unknown"
+            });
+            if (typeof window.tracker.sendEvents === "function") {
+                window.tracker.sendEvents();
+            }
+        }
     }
 
     function closeOrderModal() {

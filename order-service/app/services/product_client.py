@@ -45,7 +45,8 @@ async def get_stock_by_ids(product_ids: list[int]) -> dict[int, int]:
             timeout=HttpTimeout.DEFAULT.value
         )
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        return {int(k): int(v) for k, v in data.items()}
 
 
 async def decrease_stock(product_id: int, quantity: int) -> None:
