@@ -10,6 +10,7 @@ from shared import setup_logging
 
 from app.config import settings
 from app.api.cart_api import router as router_cart_api
+from app.api.order_api import router as router_order_api
 from app.api.pages import router as router_pages
 from app.api.gateway import router as router_gateway
 
@@ -36,6 +37,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(router_pages)
 app.include_router(router_cart_api)
+app.include_router(router_order_api)
 app.include_router(router_gateway)
 
 # CORS для фронтенда
